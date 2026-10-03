@@ -15,7 +15,6 @@ Satu pengguna (pemilik), semua data difilter `chat_id`.
 
 - Pencatatan cepat tanpa buka spreadsheet.
 - Pantau target harian (budget dan kalori) secara real-time.
-- Jadi portofolio front-end yang rapi, aman, dan responsive (mobile-first 375px).
 
 ## Tech Stack
 
@@ -29,13 +28,6 @@ Satu pengguna (pemilik), semua data difilter `chat_id`.
 - **Test:** Vitest + Testing Library
 - **Lint & format:** ESLint + Prettier
 
-## Jalankan Lokal
-
-```bash
-docker compose up -d
-cp .env.example .env.local
-npm install
-npm run dev
 ```
 
 Database lokal di `localhost:5433` dengan data seed. Reset: `docker compose down -v && docker compose up -d`.
