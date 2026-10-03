@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-hanken);
+  --font-heading: var(--font-bricolage);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,75 +46,105 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* DESIGN.md tokens */
+  --color-kertas: var(--kertas);
+  --color-struk: var(--struk);
+  --color-tinta: var(--tinta);
+  --color-tinta-redup: var(--tinta-redup);
+  --color-garis: var(--garis);
+  --color-biru-nota: var(--biru-nota);
+  --color-kuning-kalori: var(--kuning-kalori);
+  --color-stempel: var(--stempel);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* DESIGN.md bag.2 - Token Warna */
+  --kertas: #F4F6F8;
+  --struk: #FFFFFF;
+  --tinta: #1B2A41;
+  --tinta-redup: #5B6B82;
+  --garis: #D5DCE6;
+  --biru-nota: #2B59C3;
+  --kuning-kalori: #E08A1E;
+  --stempel: #C8352E;
+  /* Kategori */
+  --kategori-makanan: #E08A1E;
+  --kategori-minuman: #2F9E8F;
+  --kategori-transportasi: #2B59C3;
+  --kategori-belanja: #8E5BC9;
+  --kategori-tagihan: #6B7F2A;
+  --kategori-kesehatan: #D0568A;
+  --kategori-hiburan: #4F86B8;
+  --kategori-lainnya: #7A8699;
+
+  /* Mapping ke shadcn */
+  --background: var(--kertas);
+  --foreground: var(--tinta);
+  --card: var(--struk);
+  --card-foreground: var(--tinta);
+  --popover: var(--struk);
+  --popover-foreground: var(--tinta);
+  --primary: var(--biru-nota);
+  --primary-foreground: var(--struk);
+  --secondary: #EEF1F5;
+  --secondary-foreground: var(--tinta);
+  --muted: #EEF1F5;
+  --muted-foreground: var(--tinta-redup);
+  --accent: #EEF1F5;
+  --accent-foreground: var(--tinta);
+  --destructive: var(--stempel);
+  --destructive-foreground: var(--struk);
+  --border: var(--garis);
+  --input: var(--garis);
+  --ring: var(--biru-nota);
+  --chart-1: var(--kategori-makanan);
+  --chart-2: var(--kategori-minuman);
+  --chart-3: var(--kategori-transportasi);
+  --chart-4: var(--kategori-belanja);
+  --chart-5: var(--kategori-kesehatan);
+  --radius: 0.5rem;
+  --sidebar: var(--struk);
+  --sidebar-foreground: var(--tinta);
+  --sidebar-primary: var(--biru-nota);
+  --sidebar-primary-foreground: var(--struk);
+  --sidebar-accent: #EEF1F5;
+  --sidebar-accent-foreground: var(--tinta);
+  --sidebar-border: var(--garis);
+  --sidebar-ring: var(--biru-nota);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--tinta);
+  --foreground: var(--kertas);
+  --card: #24344E;
+  --card-foreground: var(--kertas);
+  --popover: #24344E;
+  --popover-foreground: var(--kertas);
+  --primary: var(--biru-nota);
+  --primary-foreground: var(--struk);
+  --secondary: #24344E;
+  --secondary-foreground: var(--kertas);
+  --muted: #24344E;
+  --muted-foreground: #9AA8BE;
+  --accent: #24344E;
+  --accent-foreground: var(--kertas);
+  --destructive: var(--stempel);
+  --border: #2E405E;
+  --input: #2E405E;
+  --ring: var(--biru-nota);
+  --chart-1: var(--kategori-makanan);
+  --chart-2: var(--kategori-minuman);
+  --chart-3: var(--kategori-transportasi);
+  --chart-4: var(--kategori-belanja);
+  --chart-5: var(--kategori-kesehatan);
+  --sidebar: #24344E;
+  --sidebar-foreground: var(--kertas);
+  --sidebar-primary: var(--biru-nota);
+  --sidebar-primary-foreground: var(--struk);
+  --sidebar-accent: #24344E;
+  --sidebar-accent-foreground: var(--kertas);
+  --sidebar-border: #2E405E;
+  --sidebar-ring: var(--biru-nota);
 }
 
 @layer base {
@@ -123,8 +153,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-hanken), system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-bricolage), system-ui, sans-serif;
   }
 }

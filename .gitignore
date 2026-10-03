@@ -47,3 +47,37 @@ CLAUDE.md
 DESIGN.md
 PRD.md
 docs/
+
+# === dari gitignore.template (digabung, jangan hapus baris) ===
+# GABUNGKAN isinya (jangan menghapus baris yang sudah ada).
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+build/
+coverage/
+
+# Environment & rahasia (hanya .env.example yang boleh masuk repo)
+.env
+.env.*
+.vercel/
+*.key
+*.p12
+
+# Database: dump, backup, data lokal, dan skrip berisi password asli
+pgdata/
+*.dump
+*.backup
+*.sql.gz
+*.private.sql
+
+# n8n: ekspor mentah berisi ID dan kredensial. Hanya versi yang sudah dibersihkan boleh masuk repo.
+n8n/*
+!n8n/*.sanitized.json
+
+# Lain-lain
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
