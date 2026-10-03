@@ -1,0 +1,21 @@
+# Database LOKAL untuk pengembangan. Bentuk skemanya sama dengan production.
+# Jalankan:   docker compose up -d
+# Reset data: docker compose down -v && docker compose up -d
+# (skrip di initdb.d hanya berjalan saat volume masih kosong)
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev_only_password
+      POSTGRES_DB: pengeluaran_dev
+    ports:
+      - "127.0.0.1:5433:5432"   # hanya bisa diakses dari komputer ini
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations/0001_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/local/roles.local.sql:/docker-entrypoint-initdb.d/02_roles.sql:ro
+      - ./db/local/seed.sql:/docker-entrypoint-initdb.d/03_seed.sql:ro
+
+volumes:
+  pgdata:
