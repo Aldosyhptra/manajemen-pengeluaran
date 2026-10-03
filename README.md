@@ -27,9 +27,3 @@ Satu pengguna (pemilik), semua data difilter `chat_id`.
 - **Auth sesi:** `jose` (cookie httpOnly)
 - **Test:** Vitest + Testing Library
 - **Lint & format:** ESLint + Prettier
-
-```
-
-Database lokal di `localhost:5433` dengan data seed. Reset: `docker compose down -v && docker compose up -d`.
-
-> README lengkap (diagram arsitektur, screenshot, performa) menyusul di Fase 8.
