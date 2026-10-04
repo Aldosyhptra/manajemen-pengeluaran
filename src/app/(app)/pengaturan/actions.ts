@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 import { pengaturanInputSchema } from "@/lib/schemas";
 import { upsertPengaturan } from "@/lib/data/queries";
 
@@ -27,6 +29,11 @@ export async function simpanPengaturan(
   _prev: PengaturanState,
   formData: FormData
 ): Promise<PengaturanState> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!token || !(await verifySession(token))) {
+    return { error: "Sesi tidak valid. Silakan masuk lagi." };
+  }
   const raw = {
     calorieTarget: cleanNumber(formData.get("calorieTarget")),
     budgetTarget: cleanNumber(formData.get("budgetTarget")),
