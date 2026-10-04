@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -7,13 +9,18 @@ const bodySchema = z.object({
 
 export const maxDuration = 30;
 
-type ErrorCode = "VALIDATION_ERROR" | "UPSTREAM_TIMEOUT" | "UPSTREAM_ERROR" | "INTERNAL";
+type ErrorCode = "UNAUTHORIZED" | "VALIDATION_ERROR" | "UPSTREAM_TIMEOUT" | "UPSTREAM_ERROR" | "INTERNAL";
 
 function errorResponse(code: ErrorCode, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
 export async function POST(req: Request) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!token || !(await verifySession(token))) {
+    return errorResponse("UNAUTHORIZED", "Sesi tidak valid. Silakan masuk lagi.", 401);
+  }
   let json: unknown;
   try {
     json = await req.json();

@@ -65,7 +65,9 @@ export default async function BerandaPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <TrendChart data={data.trend7d} />
-        <CategoryDonut data={data.spendingByCategory7d} />
+        <div className="capitalize">
+          <CategoryDonut data={data.spendingByCategory7d} />
+        </div>
       </div>
 
       <section className="mt-6 rounded border border-garis bg-struk p-4">
@@ -76,7 +78,7 @@ export default async function BerandaPage() {
           <ul className="mt-3 space-y-3">
             {data.recent.map((r) => (
               <li key={r.id} className="space-y-1">
-                <LeaderRow label={r.description} value={formatRupiah(r.amount)} />
+                <LeaderRow className="capitalize" label={r.description} value={formatRupiah(r.amount)} />
                 <p className="text-xs tabular-nums text-tinta-redup">{formatJamWIB(r.at)} WIB</p>
               </li>
             ))}
