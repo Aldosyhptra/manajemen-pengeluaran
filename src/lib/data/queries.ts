@@ -6,6 +6,7 @@ import {
   recentRowSchema,
   historyExpenseRowSchema,
   historyMealRowSchema,
+  pengaturanRowSchema,
 } from "@/lib/schemas";
 
 // Helper: Date -> ISO string untuk UI
@@ -74,10 +75,10 @@ export async function getTargets(chatId: string) {
     [chatId]
   );
   if (r.rows.length === 0) return { calorieTarget: 2000, budgetTarget: 150000 };
-  const row = r.rows[0];
+  const parsed = pengaturanRowSchema.parse(r.rows[0]);
   return {
-    calorieTarget: Number(row.target_kalori),
-    budgetTarget: Number(row.budget_harian),
+    calorieTarget: Number(parsed.target_kalori),
+    budgetTarget: Number(parsed.budget_harian),
   };
 }
 
