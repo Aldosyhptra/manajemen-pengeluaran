@@ -1,4 +1,6 @@
 import { getDashboardData } from "@/lib/data/queries";
+
+export const dynamic = "force-dynamic";
 import { DailyNote } from "@/components/DailyNote";
 import { TrendChart } from "@/components/TrendChart";
 import { CategoryDonut } from "@/components/CategoryDonut";
@@ -51,9 +53,7 @@ export default async function BerandaPage() {
 
   return (
     <main>
-      <p className="text-sm font-medium text-tinta-redup">{formatDateLabel(data.date)}</p>
-
-      <div className="mt-3">
+      <div>
         <DailyNote
           spending={data.today.spending}
           budgetTarget={data.targets.budgetTarget}

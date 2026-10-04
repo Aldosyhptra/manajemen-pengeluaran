@@ -81,11 +81,11 @@ export const historyDataSchema = z.object({
   meals: z.array(historyMealRowSchema),
 });
 
-// Filter riwayat via searchParams
+// Filter riwayat via searchParams - pakai z.iso.date() agar 2026-13-45 ditolak
 export const historyFilterSchema = z
   .object({
-    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
     category: kategoriSchema.optional(),
   })
   .refine(
