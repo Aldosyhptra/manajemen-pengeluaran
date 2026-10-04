@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; icon: typeof Home; accent?: boolean };
 const items: readonly NavItem[] = [
   { href: "/", label: "Beranda", icon: Home },
-  { href: "/chat", label: "Catat", icon: MessageCircle, accent: true },
+  { href: "/chat", label: "Catat", icon: MessageCircle },
   { href: "/riwayat", label: "Riwayat", icon: Clock3 },
   { href: "/pengaturan", label: "Atur", icon: Settings },
 ];
