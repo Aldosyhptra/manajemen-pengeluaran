@@ -3,8 +3,11 @@ import { Nav } from "@/components/nav";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-biru-nota focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
+        Lewati ke konten utama
+      </a>
       <Nav />
-      <div className="mx-auto w-full max-w-[960px] flex-1 px-4 pb-20 pt-4 md:px-6 md:pb-6">
+      <div id="main-content" className="mx-auto w-full max-w-[960px] flex-1 px-4 pb-20 pt-4 md:px-6 md:pb-6">
         {children}
       </div>
     </>
