@@ -2,8 +2,7 @@ import { getDashboardData } from "@/lib/data/queries";
 
 export const dynamic = "force-dynamic";
 import { DailyNote } from "@/components/DailyNote";
-import { TrendChart } from "@/components/TrendChart";
-import { CategoryDonut } from "@/components/CategoryDonut";
+import { BerandaCharts } from "@/components/BerandaCharts";
 import { LeaderRow } from "@/components/LeaderRow";
 import { formatRupiah, formatJamWIB } from "@/lib/format";
 
@@ -63,12 +62,7 @@ export default async function BerandaPage() {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <TrendChart data={data.trend7d} />
-        <div className="capitalize">
-          <CategoryDonut data={data.spendingByCategory7d} />
-        </div>
-      </div>
+      <BerandaCharts trend7d={data.trend7d} category={data.spendingByCategory7d} />
 
       <section className="mt-6 rounded border border-garis bg-struk p-4">
         <h2 className="font-heading text-lg font-bold text-tinta">Catatan terakhir</h2>
