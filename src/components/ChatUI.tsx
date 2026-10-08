@@ -20,6 +20,8 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
   const [loading, setLoading] = useState(false);
   const [loadingSlow, setLoadingSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingText, setPendingText] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showHapusConfirm, setShowHapusConfirm] = useState(false);
   const [hapusPending, setHapusPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -54,6 +56,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
       return;
     }
     setError(null);
+    setPendingText(null);
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setLoading(true);
@@ -67,6 +70,49 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
       const data = (await res.json()) as { reply?: string; error?: { code?: string; message: string } };
       if (!res.ok) {
         const msg = data.error?.message ?? "Tidak bisa mencatat. Coba lagi.";
+        const code = data.error?.code;
+        if (code === "UPSTREAM_TIMEOUT") {
+          setPendingText(text);
+          setInput(text);
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }
+        setError(msg);
+        setMessages((prev) => [...prev, { role: "assistant", text: msg }]);
+        return;
+      }
+      const reply = data.reply ?? "Tercatat.";
+      setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+      router.refresh();
+    } catch {
+      const msg = "Tidak bisa menghubungi server. Periksa koneksi, lalu coba lagi.";
+      setError(msg);
+      setMessages((prev) => [...prev, { role: "assistant", text: msg }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRetry() {
+    if (!pendingText || loading) return;
+    const text = pendingText;
+    setPendingText(null);
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = (await res.json()) as { reply?: string; error?: { code?: string; message: string } };
+      if (!res.ok) {
+        const msg = data.error?.message ?? "Tidak bisa mencatat. Coba lagi.";
+        const code = data.error?.code;
+        if (code === "UPSTREAM_TIMEOUT") {
+          setPendingText(text);
+          setInput(text);
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }
         setError(msg);
         setMessages((prev) => [...prev, { role: "assistant", text: msg }]);
         return;
@@ -184,12 +230,23 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
           {error}
         </div>
       )}
+      {pendingText && error && (
+        <button
+          type="button"
+          onClick={handleRetry}
+          disabled={loading}
+          className="mt-2 inline-flex min-h-9 items-center rounded-lg bg-biru-nota px-4 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? "Mengirim…" : "Kirim ulang"}
+        </button>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
         <label htmlFor="chat-input" className="sr-only">
           Tulis catatan
         </label>
         <input
+          ref={inputRef}
           id="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}

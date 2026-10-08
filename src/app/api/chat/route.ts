@@ -25,7 +25,7 @@ function errorResponse(code: ErrorCode, message: string, status: number) {
 }
 
 export async function POST(req: Request) {
-  let user;
+  let user: Awaited<ReturnType<typeof requireUser>>;
   try {
     user = await requireUser();
   } catch (e) {
@@ -92,60 +92,87 @@ export async function POST(req: Request) {
     };
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25_000);
-
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": webhookSecret,
-      },
-      body: JSON.stringify({
-        text,
-        chat_id: user.chatId,
-        session_id: `web-${user.chatId}`,
-        profil,
-      }),
-      signal: controller.signal,
-    });
-
-    const data = (await res.json().catch(() => null)) as unknown;
-
-    if (!res.ok) {
-      const msg =
-        data && typeof data === "object" && "error" in data && (data as { error: { message?: string } }).error?.message
-          ? (data as { error: { message: string } }).error.message
-          : "Server n8n sedang bermasalah. Coba lagi.";
-      return errorResponse("UPSTREAM_ERROR", msg, 502);
+  async function callN8n(timeoutMs: number): Promise<Response> {
+    const controller = new AbortController();
+    const tm = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(webhookUrl!, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Webhook-Secret": webhookSecret!,
+        },
+        body: JSON.stringify({
+          text,
+          chat_id: user.chatId,
+          session_id: `web-${user.chatId}`,
+          profil,
+        }),
+        signal: controller.signal,
+      });
+      return res;
+    } finally {
+      clearTimeout(tm);
     }
-
-    const n8nReplySchema = z.object({ reply: z.string().min(1) });
-    const n8nParsed = n8nReplySchema.safeParse(data);
-    if (!n8nParsed.success) {
-      return errorResponse("UPSTREAM_ERROR", "Respons n8n tidak valid.", 502);
-    }
-
-    const reply = n8nParsed.data.reply;
-    await insertChatPesan(user.id, "bot", reply);
-    await pruneKeep200(user.id);
-
-    const r = NextResponse.json({ reply });
-    r.headers.set("Cache-Control", "no-store");
-    return r;
-  } catch (e) {
-    const isAbort =
-      (e instanceof DOMException && e.name === "AbortError") || (e instanceof Error && e.name === "AbortError");
-    if (isAbort) {
-      return errorResponse(
-        "UPSTREAM_TIMEOUT",
-        "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
-        504,
-      );
-    }
-    return errorResponse("UPSTREAM_ERROR", "Tidak bisa menghubungi server n8n. Periksa koneksi atau coba lagi dalam beberapa saat.", 502);
-  } finally {
-    clearTimeout(timeout);
   }
+
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  // Retry 1x: first 14s, jika timeout/network atau 502 cepat (<5s) tunggu 3s lalu retry 13s.
+  // Total ~30s masih dalam maxDuration:30. Meniru Telegram yang hold lebih lama.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const timeoutMs = attempt === 1 ? 14_000 : 13_000;
+    const start = Date.now();
+    try {
+      const res = await callN8n(timeoutMs);
+      const data = (await res.json().catch(() => null)) as unknown;
+
+      if (!res.ok) {
+        const msg =
+          data && typeof data === "object" && "error" in data && (data as { error: { message?: string } }).error?.message
+            ? (data as { error: { message: string } }).error.message
+            : "Server n8n sedang bermasalah. Coba lagi.";
+        const elapsed = Date.now() - start;
+        if (attempt === 1 && elapsed < 5000) {
+          await delay(3000);
+          continue;
+        }
+        return errorResponse("UPSTREAM_ERROR", msg, 502);
+      }
+
+      const n8nReplySchema = z.object({ reply: z.string().min(1) });
+      const n8nParsed = n8nReplySchema.safeParse(data);
+      if (!n8nParsed.success) {
+        return errorResponse("UPSTREAM_ERROR", "Respons n8n tidak valid.", 502);
+      }
+
+      const reply = n8nParsed.data.reply;
+      await insertChatPesan(user.id, "bot", reply);
+      await pruneKeep200(user.id);
+      const r = NextResponse.json({ reply });
+      r.headers.set("Cache-Control", "no-store");
+      return r;
+    } catch (e) {
+      const isAbort =
+        (e instanceof DOMException && e.name === "AbortError") || (e instanceof Error && e.name === "AbortError");
+      if (attempt === 1) {
+        await delay(3000);
+        continue;
+      }
+      if (isAbort) {
+        return errorResponse(
+          "UPSTREAM_TIMEOUT",
+          "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
+          504,
+        );
+      }
+      return errorResponse("UPSTREAM_ERROR", "Tidak bisa menghubungi server n8n. Periksa koneksi atau coba lagi dalam beberapa saat.", 502);
+    }
+  }
+
+  return errorResponse(
+    "UPSTREAM_TIMEOUT",
+    "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
+    504,
+  );
 }
