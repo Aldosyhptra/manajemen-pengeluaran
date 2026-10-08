@@ -176,10 +176,22 @@ export async function POST(req: Request) {
   }
 
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const started = Date.now();
 
   for (let attempt = 1; attempt <= 2; attempt++) {
+    const elapsedBefore = Date.now() - started;
+    // sisa waktu sebelum Vercel maxDuration 30s (sisakan 1s buffer)
+    const remaining = 29_000 - elapsedBefore;
+    if (remaining < 3000) {
+      return errorResponse(
+        "UPSTREAM_TIMEOUT",
+        "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
+        504,
+      );
+    }
+    const timeoutMs = attempt === 1 ? 28_000 : Math.min(28_000, remaining - 500);
     try {
-      const res = await callN8n(attempt === 1 ? 14_000 : 13_000);
+      const res = await callN8n(timeoutMs);
       const data = (await res.json().catch(() => null)) as unknown;
 
       if (!res.ok) {
@@ -187,7 +199,9 @@ export async function POST(req: Request) {
           data && typeof data === "object" && "error" in data && (data as { error: { message?: string } }).error?.message
             ? (data as { error: { message: string } }).error.message
             : "Server n8n sedang bermasalah. Coba lagi.";
-        if (attempt === 1) {
+        // retry hanya untuk error cepat (<8s) — hindari double process saat n8n lagi proses
+        const elapsed = Date.now() - started;
+        if (attempt === 1 && elapsed < 8000) {
           await delay(3000);
           continue;
         }
@@ -209,16 +223,19 @@ export async function POST(req: Request) {
     } catch (e) {
       const isAbort =
         (e instanceof DOMException && e.name === "AbortError") || (e instanceof Error && e.name === "AbortError");
-      if (attempt === 1) {
-        await delay(3000);
-        continue;
-      }
       if (isAbort) {
+        // timeout = n8n masih cold start / proses — JANGAN retry (hindari double), biar user Kirim ulang manual
         return errorResponse(
           "UPSTREAM_TIMEOUT",
           "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
           504,
         );
+      }
+      // network error cepat baru retry
+      const elapsed = Date.now() - started;
+      if (attempt === 1 && elapsed < 8000) {
+        await delay(3000);
+        continue;
       }
       return errorResponse("UPSTREAM_ERROR", "Tidak bisa menghubungi server n8n. Periksa koneksi atau coba lagi dalam beberapa saat.", 502);
     }
