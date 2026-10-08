@@ -71,7 +71,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
       if (!res.ok) {
         const msg = data.error?.message ?? "Tidak bisa mencatat. Coba lagi.";
         const code = data.error?.code;
-        if (code === "UPSTREAM_TIMEOUT") {
+        if (code === "UPSTREAM_TIMEOUT" || code === "UPSTREAM_ERROR") {
           setPendingText(text);
           setInput(text);
           setTimeout(() => inputRef.current?.focus(), 0);
@@ -108,7 +108,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
       if (!res.ok) {
         const msg = data.error?.message ?? "Tidak bisa mencatat. Coba lagi.";
         const code = data.error?.code;
-        if (code === "UPSTREAM_TIMEOUT") {
+        if (code === "UPSTREAM_TIMEOUT" || code === "UPSTREAM_ERROR") {
           setPendingText(text);
           setInput(text);
           setTimeout(() => inputRef.current?.focus(), 0);

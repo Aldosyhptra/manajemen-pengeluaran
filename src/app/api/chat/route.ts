@@ -122,7 +122,6 @@ export async function POST(req: Request) {
   // Total ~30s masih dalam maxDuration:30. Meniru Telegram yang hold lebih lama.
   for (let attempt = 1; attempt <= 2; attempt++) {
     const timeoutMs = attempt === 1 ? 14_000 : 13_000;
-    const start = Date.now();
     try {
       const res = await callN8n(timeoutMs);
       const data = (await res.json().catch(() => null)) as unknown;
@@ -132,8 +131,8 @@ export async function POST(req: Request) {
           data && typeof data === "object" && "error" in data && (data as { error: { message?: string } }).error?.message
             ? (data as { error: { message: string } }).error.message
             : "Server n8n sedang bermasalah. Coba lagi.";
-        const elapsed = Date.now() - start;
-        if (attempt === 1 && elapsed < 5000) {
+        if (attempt === 1) {
+          // wake-up atau transient error saat baru online — retry sekali (apa pun status, mirip Telegram)
           await delay(3000);
           continue;
         }
