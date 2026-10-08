@@ -149,6 +149,12 @@ export const updateAnggotaSchema = z.object({
   panggilan: panggilanSchema,
 });
 
+export const permintaanPersonaSchema = z
+  .string()
+  .trim()
+  .min(1, "Permintaan wajib diisi")
+  .max(150, "Permintaan maksimal 150 karakter");
+
 export const pendaftaranPanggilanSchema = panggilanSchema;
 
 export type Kategori = z.infer<typeof kategoriSchema>;

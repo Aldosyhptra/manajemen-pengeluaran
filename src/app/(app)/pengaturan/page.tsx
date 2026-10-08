@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTargets } from "@/lib/data/queries";
 import { PengaturanForm } from "@/components/PengaturanForm";
+import { PersonaCard } from "@/components/PersonaCard";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export default async function PengaturanPage() {
         </Link>
       )}
       <PengaturanForm initialCalorie={targets.calorieTarget} initialBudget={targets.budgetTarget} panggilan={user.panggilan} />
+      <div className="mt-6">
+        <PersonaCard persona={user.persona} />
+      </div>
     </main>
   );
 }

@@ -95,6 +95,18 @@ export async function clearLoginGagal(kunci: string) {
   await pool.query("DELETE FROM login_gagal WHERE kunci = $1", [kunci]);
 }
 
+export async function countAktivitasPersona1Jam(penggunaId: number): Promise<number> {
+  const r = await pool.query(
+    "SELECT count(*)::int AS n FROM aktivitas WHERE pengguna_id = $1 AND jenis = 'persona' AND waktu > now() - interval '1 hour'",
+    [penggunaId],
+  );
+  return Number(r.rows[0]?.n ?? 0);
+}
+
+export async function insertAktivitasPersona(penggunaId: number): Promise<void> {
+  await pool.query("INSERT INTO aktivitas (pengguna_id, jenis) VALUES ($1, 'persona')", [penggunaId]);
+}
+
 export async function cleanupLoginGagal() {
   await pool.query("DELETE FROM login_gagal WHERE waktu < now() - interval '1 day'");
 }
