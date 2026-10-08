@@ -4,27 +4,30 @@ Web pribadi untuk mencatat dan memantau pengeluaran serta kalori harian dengan c
 
 ## Untuk siapa
 
-Satu pengguna (pemilik), semua data difilter `chat_id`. Tujuannya pencatatan cepat tanpa spreadsheet, pantau target harian, dan jadi portofolio front-end yang rapi, aman, mobile-first.
+Multi-pengguna dengan isolasi `chat_id` (`web-<username>`). Satu **admin** (pemilik) + anggota. Semua query filter `chat_id`/`pengguna_id`, admin kelola pengguna via `/pengaturan/pengguna`. Tujuan pencatatan cepat tanpa spreadsheet, pantau target harian, dan portofolio front-end yang rapi, aman, mobile-first.
 
 ## Fitur
 
 - **Beranda (/)** — nota hari ini (pengeluaran vs budget, kalori vs target, bar 600ms, stempel merah jika over), tren 7 hari toggle Pengeluaran | Kalori, donat kategori + legenda LeaderRow, 5 catatan terakhir.
-- **Catat (/chat)** — chat bahasa natural mis. `kopi 18rb` atau `sarapan nasi uduk 2 telur`. Mencatat… + tombol disabled saat kirim, `router.refresh()` setelah sukses, kalori diberi label perkiraan.
+- **Catat (/chat)** — chat bahasa natural mis. `kopi 18rb` atau `sarapan nasi uduk 2 telur`. Dukung foto JPG/PNG/WebP maks 5MB + caption (foto opsi 1: preview `objectURL` di bubble, hilang saat pindah/refresh/prune 200 — tidak persist). Status `Mencatat…` → `Sabar, AI-nya baru bangun…` setelah 8s, retry `Kirim ulang` untuk `504`/`502`, batas 30/jam per pengguna.
 - **Riwayat (/riwayat)** — tab Pengeluaran | Kalori, filter `?from & ?to & ?category` via GET, validasi Zod, group per tanggal WIB, LeaderRow + chip kategori + jam WIB.
-- **Atur (/pengaturan)** — form target kalori 500–10000 dan budget 1–50.000.000, format 1.000.000, simpan via Server Action upsert, revalidate Beranda.
-- **Login (/login)** — password tunggal, cookie httpOnly Secure SameSite Lax (jose HS256, 7 hari), proxy proteksi semua halaman & /api/*.
+- **Atur (/pengaturan)** — target kalori 500–10000 & budget 1–50.000.000 (upsert `pengaturan` per `chat_id`), ganti panggilan, ganti password (scrypt), kartu Persona.
+- **Persona (/pengaturan)** — atur gaya bicara via `POST /api/persona` (`permintaan` 1–150 → Gemini via `N8N_PERSONA_URL` → `validatePersona` 40–1200). Bawaan sopan, tombol Kembali ke bawaan via ConfirmDialog, batas 5/jam per pengguna. `PERSONA_FAKE=true` lokal tanpa n8n.
+- **Kelola pengguna (/pengaturan/pengguna)** — admin only: buat anggota, reset password & persona, aktif/nonaktif. Semua perubahan via dialog konfirmasi. Hanya satu admin (`ux_satu_admin`).
+- **Login (/login)** — multiuser scrypt (`scrypt$16384$8$1$`), JWT `jose` HS256 cookie `httpOnly` `Secure` `SameSite=Lax` 7 hari (`SESSION_SECRET` ≥32 char). `wajib_ganti_password` redirect ke `/ganti-password`. Rate limit login 5/15 menit per `username`/`IP`.
+- **Riwayat chat** — `chat_pesan` 200 terbaru per `pengguna_id` (`pruneKeep200`), `aktivitas` jenis `chat`/`persona` terpisah supaya hapus percakapan tidak reset batas.
 
 ## Arsitektur
 
 ```
 Browser ──▶ Next.js (Vercel, region sin1 dekat Railway)
-             ├─▶ Postgres Railway (role app_web, TCP proxy publik + ?sslmode=require) — dashboard, riwayat, pengaturan
-             └─▶ Webhook n8n (POST + X-Webhook-Secret) — chat
-Telegram ──▶ n8n (AI Agent) ──▶ Postgres Railway ◀── Next.js (Vercel)
-Lokal: Next.js ─▶ Postgres Docker localhost:5433, chat CHAT_FAKE=true balas palsu
+             ├─▶ Postgres Railway (role app_web, TCP proxy publik + ?sslmode=require) — dashboard, riwayat, pengaturan, pengguna, chat_pesan
+             ├─▶ Webhook n8n chat (POST multipart/form-data + X-Webhook-Secret) — AI Agent (Gemini) ──▶ Postgres Railway
+             └─▶ Webhook n8n persona (POST JSON + X-Webhook-Secret) — Pembuat Persona ──▶ Next.js validasi
+Lokal: Next.js ─▶ Postgres Docker localhost:5433, CHAT_FAKE=true & PERSONA_FAKE=true balas palsu
 ```
 
-Kenapa baca langsung SQL, bukan lewat AI: angka keuangan harus deterministik (SUM, GROUP BY), AI hanya untuk menulis catatan dari bahasa natural.
+Kenapa baca langsung SQL, bukan lewat AI: angka keuangan harus deterministik (SUM, GROUP BY), AI hanya untuk menulis catatan dari bahasa natural. `chat_id`/`panggilan`/`persona`/`target_kalori` dikirim via `profil` (`JSON` normal, `JSON.stringify` untuk `multipart` foto — n8n perlu `JSON.parse` saat `profil` string).
 
 ## Stack
 
@@ -33,11 +36,13 @@ Next.js 16 App Router + TypeScript strict, Tailwind CSS v4, shadcn/ui (base-nova
 ## Struktur
 
 ```
-src/app/(app)/ page.tsx (Beranda force-dynamic) chat/ riwayat/ pengaturan/ + loading.tsx error.tsx layout.tsx
-src/app/login/page.tsx (Suspense) api/chat/route.ts api/login/route.ts api/logout/route.ts
-src/proxy.ts  src/components/ nav DailyNote LeaderRow TrendChart CategoryDonut ChatUI PengaturanForm + ui/* 
-src/lib/ auth db format schemas data/queries.ts utils
-db/migrations/0001_init.sql  db/local/roles.local.sql seed.sql  docker-compose.yml
+src/app/(app)/ page.tsx (Beranda force-dynamic) chat/ riwayat/ pengaturan/ pengaturan/pengguna/ pengaturan/pengguna/[id] + loading.tsx error.tsx layout.tsx
+src/app/login/page.tsx ganti-password/page.tsx page.test.tsx
+src/app/api/ chat/route.ts chat/hapus/route.ts login/route.ts logout/route.ts ganti-password/route.ts panggilan/route.ts persona/route.ts
+src/proxy.ts  src/components/ nav DailyNote LeaderRow TrendChart CategoryDonut ChatUI PengaturanForm PersonaCard ConfirmDialog + ui/*
+src/lib/ auth.ts db.ts format.ts schemas.ts persona.ts utils.ts data/queries.ts data/chat.ts data/pengguna.ts __tests__/
+db/migrations/ 0001_init.sql 0002_multiuser.sql  db/local/ roles.local.sql seed.sql  docker-compose.yml
+scripts/hash-password.ts  vitest.config.ts  next.config.ts
 ```
 
 ## Token visual (DESIGN.md)
@@ -53,39 +58,54 @@ npm install
 npm run dev
 ```
 
-Database lokal `localhost:5433` isi seed pengeluaran 20, kalori 16, pengaturan 1 (chat_id 1000000001). Reset: `docker compose down -v && docker compose up -d`.
+Database lokal `localhost:5433` (volume `pgdata`, init `0001_init.sql` → `roles.local.sql` → `0002_multiuser.sql` → `seed.sql`). Seed: admin `admin` + anggota `ibu`, pengeluaran/kalori contoh, pengaturan default. Reset: `docker compose down -v && docker compose up -d`.
 
 `.env.example` berisi placeholder lokal:
 
 ```
 DATABASE_URL=postgresql://app_web:***@localhost:5433/pengeluaran_dev
-OWNER_CHAT_ID=1302646743
+SESSION_SECRET=ganti-min-32-karakter-acak-untuk-lokal-xxxx
+N8N_WEBHOOK_URL=http://localhost:5678/webhook/chat
+N8N_WEBHOOK_SECRET=ganti-secret-a-lokal
+N8N_PERSONA_URL=http://localhost:5678/webhook/persona
+N8N_PERSONA_SECRET=ganti-secret-b-lokal
 CHAT_FAKE=true
-APP_PASSWORD=dev-password
-SESSION_SECRET=*** 64+ char
+PERSONA_FAKE=true
 ```
 
-Production env hanya di Vercel dashboard (tanpa NEXT_PUBLIC_): `DATABASE_URL` (public proxy ?sslmode=require), `OWNER_CHAT_ID`, `N8N_WEBHOOK_URL` (Production URL /webhook/chat, workflow Active ON), `N8N_WEBHOOK_SECRET`, `APP_PASSWORD`, `SESSION_SECRET`. Jangan set `CHAT_FAKE` di production.
+Production env hanya di Vercel dashboard (tanpa `NEXT_PUBLIC_`): `DATABASE_URL` (public proxy `?sslmode=require`), `SESSION_SECRET`, `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET`, `N8N_PERSONA_URL`, `N8N_PERSONA_SECRET`. Jangan set `CHAT_FAKE`/`PERSONA_FAKE` di production. Hapus `OWNER_CHAT_ID`/`APP_PASSWORD` lama jika masih ada.
+
+Buat hash password lokal (butuh dummy `DATABASE_URL` karena `auth` import `db`):
+
+```bash
+$env:DATABASE_URL="postgresql://x:x@localhost:1/db"; npm run hash
+# masukkan password 10+ char → copy 1 baris scrypt$16384$8$1$...
+```
+
+Seed admin production via DBeaver: jalankan `0002_multiuser.sql` dulu bila `pengguna does not exist`, lalu `INSERT INTO pengguna (username,nama,panggilan,chat_id,peran,password_hash,wajib_ganti_password,persona) VALUES ('tinxx',...)` (username lowercase `^[a-z0-9._-]{3,30}$`).
 
 ## Perintah
 
-`npm run dev` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test`
+`npm run dev` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test` · `npm run hash`
 
 ## Keamanan
 
-- Query berparameter + filter chat_id, cast ::int ::text, Zod di input & hasil.
-- Pool pg max 3 (serverless), timestamptz dibaca Date -> ISO -> format Intl Asia/Jakarta.
-- Cookie sesi httpOnly Secure SameSite Lax, rate limit login 5/15 menit.
-- DB hanya localhost:5433 lokal, CHAT_FAKE hanya di NODE_ENV != production.
+- Query berparameter + filter `chat_id`/`pengguna_id`, `chatId` selalu dari sesi server (`requireUser()`), bukan dari body/query/header. `peran=admin` dicek dari DB setiap aksi.
+- Validasi Zod di input & hasil query, `pg` `bigint`/`numeric` di-cast `::int`/`::text`.
+- `validatePersona` 40–1200 + tolak URL/```/SQL/`chat_id`/`database`/`kategori`/`abaikan aturan`.
+- `pg` pool `max 3` (serverless), `timestamptz` → `Date` → `Intl Asia/Jakarta`, `maxDuration 30` (Hobby).
+- Cookie sesi `httpOnly` `Secure` `SameSite=Lax`, `SESSION_SECRET` ≥32 char, `versi_sesi` untuk logout semua perangkat.
+- Rate limit: login 5/15 menit (`login_gagal`), chat 30/jam & persona 5/jam (`aktivitas`).
+- DB hanya `localhost:5433` lokal, `CHAT_FAKE`/`PERSONA_FAKE` hanya `NODE_ENV != production`, tidak ada secret di klien.
 
 ## Screenshot
 
-Letak di `public/` atau screenshot manual: Beranda nota bergerigi, tren 7 hari, donat kategori, Catat chat, Riwayat filter, Atur form. Mobile 375px & desktop 768px.
+Letak di `public/` atau screenshot manual: Beranda nota bergerigi, tren 7 hari, donat kategori, Catat chat (+ foto), Riwayat filter, Atur form + Persona, Kelola pengguna. Mobile 375px & desktop 768px.
 
 ## Deploy
 
-Vercel import branch `main`, set env di atas, Functions Region sin1 (Singapore dekat Railway). Push ke main auto-deploy.
+Vercel import branch `main`, set env di atas, Functions Region `sin1` (Singapore dekat Railway). Push ke `main` auto-deploy. Migrasi `0002_multiuser.sql` dijalankan manual di Railway (DBeaver Alt+X, `IF NOT EXISTS` aman berulang).
 
 ## Lisensi
 
-Pribadi, bukan untuk multi-user. Edit/hapus entri, ekspor CSV, dark mode di luar MVP.
+Pribadi — satu admin + anggota, bukan SaaS publik. Edit/hapus entri, ekspor CSV, dark mode di luar MVP. Foto chat opsi 1 tidak persist (hilang ikut prune 200); persist butuh `foto_url` + Vercel Blob/base64 (belum ada).
