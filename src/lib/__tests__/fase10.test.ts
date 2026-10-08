@@ -60,7 +60,7 @@ describe("Fase 10 - riwayat chat isolasi per pengguna", () => {
     const ids = await getPenggunaIds();
     const ibuId = ids["ibu"];
     // bersihkan
-    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1", [ibuId]);
+    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1 AND jenis = 'chat'", [ibuId]);
     await clearChat(ibuId);
 
     await insertAktivitasChat(ibuId);
@@ -79,13 +79,13 @@ describe("Fase 10 - riwayat chat isolasi per pengguna", () => {
     expect(h.length).toBe(0);
 
     // cleanup aktivitas
-    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1", [ibuId]);
+    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1 AND jenis = 'chat'", [ibuId]);
   });
 
   it("30 per jam dibatasi (count >=30 dianggap penuh)", async () => {
     const ids = await getPenggunaIds();
     const ibuId = ids["ibu"];
-    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1", [ibuId]);
+    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1 AND jenis = 'chat'", [ibuId]);
     // insert 30
     for (let i = 0; i < 30; i++) await insertAktivitasChat(ibuId);
     const c30 = await countAktivitasChat1Jam(ibuId);
@@ -94,7 +94,7 @@ describe("Fase 10 - riwayat chat isolasi per pengguna", () => {
     expect(c30 >= 30).toBe(true);
 
     // cleanup
-    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1", [ibuId]);
+    await pool.query("DELETE FROM aktivitas WHERE pengguna_id = $1 AND jenis = 'chat'", [ibuId]);
     const c0 = await countAktivitasChat1Jam(ibuId);
     expect(c0).toBe(0);
   });
