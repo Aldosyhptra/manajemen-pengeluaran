@@ -1,25 +1,49 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type Msg = { role: "user" | "assistant"; text: string };
+type InitialMsg = { id: string; role: "user" | "bot"; text: string; at: string };
 
 const examples = ["kopi 18rb", "sarapan nasi uduk 2 telur"];
 
-export function ChatUI() {
+export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[] }) {
   const router = useRouter();
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(() =>
+    initialMessages.map((m) => ({ role: m.role === "bot" ? "assistant" : "user", text: m.text })),
+  );
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingSlow, setLoadingSlow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showHapusConfirm, setShowHapusConfirm] = useState(false);
+  const [hapusPending, setHapusPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages.map((m) => ({ role: m.role === "bot" ? "assistant" : "user", text: m.text }) as Msg));
+    }
+  }, [initialMessages]);
 
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [messages, loading]);
+  }, [messages, loading, loadingSlow]);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingSlow(false);
+      return;
+    }
+    const t = setTimeout(() => setLoadingSlow(true), 8000);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +64,7 @@ export function ChatUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const data = (await res.json()) as { reply?: string; error?: { message: string } };
+      const data = (await res.json()) as { reply?: string; error?: { code?: string; message: string } };
       if (!res.ok) {
         const msg = data.error?.message ?? "Tidak bisa mencatat. Coba lagi.";
         setError(msg);
@@ -59,13 +83,44 @@ export function ChatUI() {
     }
   }
 
+  async function handleHapus() {
+    setHapusPending(true);
+    try {
+      const res = await fetch("/api/chat/hapus", { method: "POST" });
+      const data = (await res.json().catch(() => null)) as { error?: { message: string } } | null;
+      if (!res.ok) {
+        setError(data?.error?.message ?? "Gagal menghapus percakapan.");
+        return;
+      }
+      setMessages([]);
+      setError(null);
+      setShowHapusConfirm(false);
+      router.refresh();
+    } catch {
+      setError("Tidak bisa menghubungi server. Periksa koneksi, lalu coba lagi.");
+    } finally {
+      setHapusPending(false);
+    }
+  }
+
   function fillExample(ex: string) {
     setInput(ex);
   }
 
   return (
     <div className="flex flex-col">
-      {/* Daftar pesan */}
+      {messages.length > 0 && (
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowHapusConfirm(true)}
+            disabled={hapusPending}
+            className="text-sm font-medium text-tinta-redup hover:text-tinta hover:underline disabled:opacity-50"
+          >
+            Hapus percakapan
+          </button>
+        </div>
+      )}
       <div
         ref={listRef}
         className="flex min-h-[280px] max-h-[52vh] flex-col gap-3 overflow-y-auto rounded border border-garis bg-kertas p-3 sm:p-4"
@@ -118,7 +173,7 @@ export function ChatUI() {
         {loading && (
           <div className="flex justify-start">
             <div className="rounded-2xl rounded-bl-lg border border-garis bg-struk px-3.5 py-2.5 text-sm text-tinta-redup">
-              Mencatat…
+              {loadingSlow ? "Sabar, AI-nya baru bangun\u2026" : "Mencatat\u2026"}
             </div>
           </div>
         )}
@@ -130,7 +185,6 @@ export function ChatUI() {
         </div>
       )}
 
-      {/* Input */}
       <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
         <label htmlFor="chat-input" className="sr-only">
           Tulis catatan
@@ -153,6 +207,17 @@ export function ChatUI() {
         </button>
       </form>
       <p className="mt-1 text-xs text-tinta-redup">{input.length}/500</p>
+
+      <ConfirmDialog
+        open={showHapusConfirm}
+        title="Hapus percakapan?"
+        changes={[{ label: "Riwayat", sebelum: "ada", sesudah: "kosong" }]}
+        akibat="Riwayat hilang di semua perangkat. Batas pemakaian tidak direset."
+        confirmLabel="Ya, hapus percakapan"
+        pending={hapusPending}
+        onConfirm={handleHapus}
+        onCancel={() => setShowHapusConfirm(false)}
+      />
     </div>
   );
 }

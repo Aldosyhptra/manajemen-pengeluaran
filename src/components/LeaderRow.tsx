@@ -10,7 +10,7 @@ type LeaderRowProps = {
 export function LeaderRow({ label, value, className, valueClassName }: LeaderRowProps) {
   return (
     <div className={cn("flex items-baseline gap-2 text-sm", className)}>
-      <span className="shrink-0 text-tinta">{label}</span>
+      <span className="shrink-0 capitalize text-tinta">{label}</span>
       <span
         aria-hidden
         className="min-w-4 flex-1 border-b-2 border-dotted border-garis self-end mb-1"

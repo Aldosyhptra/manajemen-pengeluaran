@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getHistory } from "@/lib/data/queries";
+import { requireUser } from "@/lib/auth";
 import { historyFilterSchema } from "@/lib/schemas";
 import { LeaderRow } from "@/components/LeaderRow";
 import { formatRupiah, formatKkal, formatJamWIB } from "@/lib/format";
@@ -92,20 +93,12 @@ export default async function RiwayatPage({
     categoryEff = (parsed.data.category as string) ?? null;
   }
 
-  // Lokal: pakai seed 1000000001 agar filter bisa diuji (sesuai Fase 2)
-  const SEED_CHAT_ID = "1000000001";
-  const ownerId = process.env.OWNER_CHAT_ID || SEED_CHAT_ID;
+  const user = await requireUser();
 
   let data = { expenses: [] as Awaited<ReturnType<typeof getHistory>>["expenses"], meals: [] as Awaited<ReturnType<typeof getHistory>>["meals"] };
-  let usedSeedFallback = false;
 
   if (!filterError) {
-    data = await getHistory(ownerId, fromEff, toEff, categoryEff);
-    const emptyOwner = data.expenses.length === 0 && data.meals.length === 0;
-    if (emptyOwner && ownerId !== SEED_CHAT_ID && process.env.NODE_ENV !== "production") {
-      data = await getHistory(SEED_CHAT_ID, fromEff, toEff, categoryEff);
-      usedSeedFallback = data.expenses.length > 0 || data.meals.length > 0;
-    }
+    data = await getHistory(user.chatId, fromEff, toEff, categoryEff);
   }
 
   // Group by tanggal WIB (YYYY-MM-DD)
@@ -147,7 +140,7 @@ export default async function RiwayatPage({
     <main>
       <h1 className="font-heading text-2xl font-bold text-tinta">Riwayat</h1>
       <p className="mt-1 text-sm text-tinta-redup">
-        {fromEff} — {toEff} · WIB {usedSeedFallback && <span className="text-xs">(data lokal)</span>}
+        {fromEff} — {toEff} · WIB
       </p>
 
       {/* Tab */}

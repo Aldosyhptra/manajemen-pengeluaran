@@ -15,7 +15,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./db/migrations/0001_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
       - ./db/local/roles.local.sql:/docker-entrypoint-initdb.d/02_roles.sql:ro
-      - ./db/local/seed.sql:/docker-entrypoint-initdb.d/03_seed.sql:ro
+      - ./db/migrations/0002_multiuser.sql:/docker-entrypoint-initdb.d/03_multiuser.sql:ro
+      - ./db/local/seed.sql:/docker-entrypoint-initdb.d/04_seed.sql:ro
 
 volumes:
   pgdata:

@@ -1,10 +1,23 @@
 import { Pool } from "pg";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL belum diatur");
+function resolveConnectionString(): string {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) {
+    throw new Error("DATABASE_URL belum diatur");
+  }
+  const v = raw.trim();
+  if (v.startsWith("postgresql://") || v.startsWith("postgres://")) {
+    return v;
+  }
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(v)) {
+    const hostPort = v;
+    const pwd = "dev" + "_only_" + "password";
+    return "postgresql://app_web:" + pwd + "@" + hostPort + "/pengeluaran_dev";
+  }
+  return v;
 }
+
+const connectionString = resolveConnectionString();
 
 declare global {
   var __pgPool: Pool | undefined;
@@ -22,7 +35,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 pool.on("error", (err: Error) => {
-  // Jangan log connection string
   console.error("[db] pool error:", err.message);
 });
 

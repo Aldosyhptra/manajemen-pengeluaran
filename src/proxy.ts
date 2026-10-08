@@ -5,7 +5,6 @@ const PUBLIC_PATHS = ["/login", "/api/login"];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) return true;
-  // static & next internals
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -18,26 +17,37 @@ function isPublic(pathname: string): boolean {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (isPublic(pathname)) return NextResponse.next();
+  if (isPublic(pathname)) {
+    const res = NextResponse.next();
+    return res;
+  }
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid. Silakan masuk lagi." } }, { status: 401 });
+      const res = NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Sesi tidak valid. Silakan masuk lagi." } },
+        { status: 401 },
+      );
+      res.headers.set("Cache-Control", "no-store");
+      return res;
     }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.headers.set("Cache-Control", "no-store");
+    return res;
   }
 
-  const valid = await verifySession(token);
-  if (!valid) {
+  const payload = await verifySession(token);
+  if (!payload) {
     if (pathname.startsWith("/api/")) {
       const res = NextResponse.json(
         { error: { code: "UNAUTHORIZED", message: "Sesi tidak valid. Silakan masuk lagi." } },
-        { status: 401 }
+        { status: 401 },
       );
+      res.headers.set("Cache-Control", "no-store");
       res.cookies.delete(SESSION_COOKIE);
       return res;
     }
@@ -45,11 +55,14 @@ export async function proxy(req: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
     const res = NextResponse.redirect(url);
+    res.headers.set("Cache-Control", "no-store");
     res.cookies.delete(SESSION_COOKIE);
     return res;
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set("Cache-Control", "no-store");
+  return res;
 }
 
 export const config = {

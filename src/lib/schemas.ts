@@ -102,6 +102,55 @@ export const historyFilterSchema = z
     { message: "Rentang tanggal maksimal 366 hari dan from <= to", path: ["from"] }
   );
 
+// Fase 9: login, ganti password, panggilan
+export const loginSchema = z.object({
+  username: z.string().trim().min(1, "Username wajib diisi").max(30),
+  password: z.string().min(1, "Password wajib diisi").max(200),
+});
+
+export const gantiPasswordSchema = z.object({
+  passwordLama: z.string().min(1, "Password lama wajib diisi"),
+  passwordBaru: z.string().min(10, "Password baru minimal 10 karakter").max(200),
+  konfirmasi: z.string().min(1, "Konfirmasi wajib diisi"),
+}).refine((v) => v.passwordBaru === v.konfirmasi, {
+  message: "Konfirmasi password tidak cocok",
+  path: ["konfirmasi"],
+});
+
+export const panggilanSchema = z
+  .string()
+  .trim()
+  .min(1, "Panggilan wajib diisi")
+  .max(20)
+  .regex(/^[\p{L}][\p{L} ]{0,19}$/u, "Panggilan hanya huruf dan spasi, diawali huruf");
+
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "Username minimal 3 karakter")
+  .max(30, "Username maksimal 30 karakter")
+  .regex(/^[a-z0-9._-]{3,30}$/, "Username hanya a-z, 0-9, titik, underscore, atau strip");
+
+export const namaSchema = z
+  .string()
+  .trim()
+  .min(1, "Nama wajib diisi")
+  .max(100, "Nama maksimal 100 karakter");
+
+export const createAnggotaSchema = z.object({
+  username: usernameSchema,
+  nama: namaSchema,
+  panggilan: panggilanSchema,
+});
+
+export const updateAnggotaSchema = z.object({
+  nama: namaSchema,
+  panggilan: panggilanSchema,
+});
+
+export const pendaftaranPanggilanSchema = panggilanSchema;
+
 export type Kategori = z.infer<typeof kategoriSchema>;
 export type DashboardData = z.infer<typeof dashboardDataSchema>;
 export type HistoryData = z.infer<typeof historyDataSchema>;

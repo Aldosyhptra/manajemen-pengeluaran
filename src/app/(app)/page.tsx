@@ -1,4 +1,5 @@
 import { getDashboardData } from "@/lib/data/queries";
+import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 import { DailyNote } from "@/components/DailyNote";
@@ -17,22 +18,8 @@ function formatDateLabel(dateWIB: string): string {
 }
 
 export default async function BerandaPage() {
-  // Sementara pakai data seed lokal (1000000001). Nanti ganti ke OWNER_CHAT_ID saat integrasi n8n/DB production.
-  const SEED_CHAT_ID = "1000000001";
-  const ownerId = process.env.OWNER_CHAT_ID || SEED_CHAT_ID;
-
-  let data = await getDashboardData(ownerId);
-
-  // Fallback lokal: jika data owner kosong (mis. OWNER_CHAT_ID 1302646743 belum ada seed), pakai seed agar Fase 2 bisa diverifikasi
-  const isEmpty =
-    data.today.spending === 0 &&
-    data.today.calories === 0 &&
-    data.trend7d.every((d) => d.spending === 0 && d.calories === 0) &&
-    data.recent.length === 0;
-
-  if (isEmpty && ownerId !== SEED_CHAT_ID && process.env.NODE_ENV !== "production") {
-    data = await getDashboardData(SEED_CHAT_ID);
-  }
+  const user = await requireUser();
+  const data = await getDashboardData(user.chatId);
 
   const isEmptyOverall =
     data.trend7d.every((d) => d.spending === 0 && d.calories === 0) &&

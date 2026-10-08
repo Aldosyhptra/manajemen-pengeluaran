@@ -52,3 +52,49 @@ FROM (VALUES
   (6, '19:15', 'pecel lele dan nasi',     650),
   (7, '12:30', 'nasi padang',             800)
 ) AS t(hari_lalu, jam, nama_makanan, kkal);
+
+
+-- ===== Multi-pengguna (0002) =====
+-- Akun dev. Password HANYA untuk lokal: admin / admin-dev-pass-1  dan  ibu / ibu-dev-pass-1
+INSERT INTO pengguna (username, nama, panggilan, chat_id, peran, password_hash, persona) VALUES
+('admin', 'Admin Dev', 'Atmin', '1000000001', 'admin', 'scrypt$16384$8$1$uav+3nQyctDm4xn3Tw9z6w==$f9rsTXyVoH1PjlO/4WhmBdquwtwsq5TZiNml2fPl8OdX9ixoWGznlwZoS2xz1rVlo68Oz6Bm36FgcOFUPlKeTA==',
+ $persona$Gaya bicara: gaul, santai, dan absurd ala sirkel "meme jomok" lokal.
+Sisipan "lho ya", "loh ya", atau "woilah" HANYA saat bercanda, nge-troll, atau melebih-lebihkan situasi. DILARANG dipakai di kalimat yang menyebut angka, nominal uang, atau kalori. Pisahkan kalimat informasi angka (jelas dan akurat) dari kalimat candaan.
+Selipkan 1-2 emoji (😿 untuk jajan mahal atau over kalori, 😹 atau 🤤 untuk makan enak).
+Boleh hiperbola (dompet "nangis") dan lore meme ("Mas Amba", "Mas Rusdi", "Mas Gatot", "Si Imut") hanya sebagai bumbu komedi di akhir balasan.
+Jangan vulgar dan jangan menyinggung SARA. Jika pengguna terlihat bokek atau kesulitan finansial, kurangi bercanda dan jadilah suportif.
+Jika kalori melebihi target, sarankan jalan cepat (4,5 km dalam 45 menit) atau lari ke barbershop Mas Rusdi biar body keker.$persona$),
+('ibu', 'Ibu Dev', 'Ibu', 'web-ibu', 'anggota', 'scrypt$16384$8$1$AdDEj9v+jUaXvfHMEymu1A==$hbsoeEhoHV1pYf1QbD0V7wx/N1S6Dc1ARiHfJVkHEs3CV888SZpa1TcIy120iWP5ddsSD5CA6KeJwBYMNO2h6Q==', NULL);
+
+-- Target pengguna kedua (berbeda dari admin, untuk menguji isolasi data)
+INSERT INTO pengaturan (chat_id, target_kalori, budget_harian) VALUES ('web-ibu', 1800, 100000);
+
+-- Data pengguna kedua. Harus TIDAK PERNAH muncul di akun admin, dan sebaliknya.
+INSERT INTO pengeluaran (chat_id, tanggal, kategori, deskripsi, nominal)
+SELECT 'web-ibu',
+       ((now() AT TIME ZONE 'Asia/Jakarta')::date - hari_lalu::int + jam::time) AT TIME ZONE 'Asia/Jakarta',
+       kategori, deskripsi, nominal::int
+FROM (VALUES
+  (0, '06:30', 'belanja',   'sayur di pasar',  45000),
+  (0, '10:00', 'makanan',   'bakso',           20000),
+  (1, '09:00', 'tagihan',   'pulsa',           50000),
+  (2, '11:30', 'kesehatan', 'obat batuk',      30000)
+) AS t(hari_lalu, jam, kategori, deskripsi, nominal);
+
+INSERT INTO kalori (chat_id, tanggal, nama_makanan, estimasi_kalori)
+SELECT 'web-ibu',
+       ((now() AT TIME ZONE 'Asia/Jakarta')::date - hari_lalu::int + jam::time) AT TIME ZONE 'Asia/Jakarta',
+       nama_makanan, kkal::int
+FROM (VALUES
+  (0, '07:00', 'nasi dan tempe',  400),
+  (0, '10:10', 'bakso',           450),
+  (1, '12:00', 'soto ayam',       400)
+) AS t(hari_lalu, jam, nama_makanan, kkal);
+
+-- Riwayat chat contoh untuk admin
+INSERT INTO chat_pesan (pengguna_id, peran, teks, waktu)
+SELECT (SELECT id FROM pengguna WHERE username = 'admin'), peran, teks, now() - (menit || ' minutes')::interval
+FROM (VALUES
+  ('user', 'kopi 18rb', 30),
+  ('bot',  'Kopi sudah dicatat: Rp18.000. Total pengeluaran hari ini Rp58.000. 😹 Dompet masih aman.', 29)
+) AS t(peran, teks, menit);

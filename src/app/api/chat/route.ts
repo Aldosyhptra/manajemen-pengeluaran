@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 import { z } from "zod";
+import { requireUser } from "@/lib/auth";
+import { DEFAULT_PERSONA } from "@/lib/persona";
+import { getTargets } from "@/lib/data/queries";
+import {
+  countAktivitasChat1Jam,
+  insertAktivitasChat,
+  insertChatPesan,
+  pruneKeep200,
+} from "@/lib/data/chat";
 
 const bodySchema = z.object({
   text: z.string().trim().min(1, "Tulis sesuatu dulu.").max(500, "Maksimal 500 karakter."),
@@ -9,18 +16,24 @@ const bodySchema = z.object({
 
 export const maxDuration = 30;
 
-type ErrorCode = "UNAUTHORIZED" | "VALIDATION_ERROR" | "UPSTREAM_TIMEOUT" | "UPSTREAM_ERROR" | "INTERNAL";
+type ErrorCode = "UNAUTHORIZED" | "VALIDATION_ERROR" | "UPSTREAM_TIMEOUT" | "UPSTREAM_ERROR" | "INTERNAL" | "RATE_LIMITED";
 
 function errorResponse(code: ErrorCode, message: string, status: number) {
-  return NextResponse.json({ error: { code, message } }, { status });
+  const res = NextResponse.json({ error: { code, message } }, { status });
+  res.headers.set("Cache-Control", "no-store");
+  return res;
 }
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token || !(await verifySession(token))) {
+  let user;
+  try {
+    user = await requireUser();
+  } catch (e) {
+    const code = (e as Error & { code?: string }).code;
+    if (code === "UNAUTHORIZED") return errorResponse("UNAUTHORIZED", "Sesi tidak valid. Silakan masuk lagi.", 401);
     return errorResponse("UNAUTHORIZED", "Sesi tidak valid. Silakan masuk lagi.", 401);
   }
+
   let json: unknown;
   try {
     json = await req.json();
@@ -36,23 +49,47 @@ export async function POST(req: Request) {
 
   const text = parsed.data.text;
 
+  const count = await countAktivitasChat1Jam(user.id);
+  if (count >= 30) {
+    return errorResponse("RATE_LIMITED", "Terlalu sering mengirim. Coba lagi nanti.", 429);
+  }
+
+  await insertAktivitasChat(user.id);
+  await insertChatPesan(user.id, "user", text);
+
   const chatFake = process.env.CHAT_FAKE === "true";
   const isProd = process.env.NODE_ENV === "production";
 
-  // Mode palsu lokal (PRD 6.4)
   if (chatFake && !isProd) {
-    // Balasan palsu tanpa memanggil n8n
     const reply = `Tercatat: ${text}`;
-    return NextResponse.json({ reply });
+    await insertChatPesan(user.id, "bot", reply);
+    await pruneKeep200(user.id);
+    const r = NextResponse.json({ reply });
+    r.headers.set("Cache-Control", "no-store");
+    return r;
   }
 
-  // Production / CHAT_FAKE != true -> forward ke n8n
   const webhookUrl = process.env.N8N_WEBHOOK_URL;
   const webhookSecret = process.env.N8N_WEBHOOK_SECRET;
-  const ownerChatId = process.env.OWNER_CHAT_ID;
 
-  if (!webhookUrl || !webhookSecret || !ownerChatId) {
+  if (!webhookUrl || !webhookSecret) {
     return errorResponse("INTERNAL", "Konfigurasi server belum lengkap.", 500);
+  }
+
+  let profil: { panggilan: string; persona: string; target_kalori: number };
+  try {
+    const targets = await getTargets(user.chatId);
+    profil = {
+      panggilan: user.panggilan,
+      persona: user.persona ?? DEFAULT_PERSONA,
+      target_kalori: targets.calorieTarget,
+    };
+  } catch {
+    profil = {
+      panggilan: user.panggilan,
+      persona: user.persona ?? DEFAULT_PERSONA,
+      target_kalori: 2000,
+    };
   }
 
   const controller = new AbortController();
@@ -67,8 +104,9 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         text,
-        chat_id: ownerChatId,
-        session_id: "web-main",
+        chat_id: user.chatId,
+        session_id: `web-${user.chatId}`,
+        profil,
       }),
       signal: controller.signal,
     });
@@ -85,23 +123,28 @@ export async function POST(req: Request) {
 
     const n8nReplySchema = z.object({ reply: z.string().min(1) });
     const n8nParsed = n8nReplySchema.safeParse(data);
-    if (n8nParsed.success) {
-      return NextResponse.json({ reply: n8nParsed.data.reply });
+    if (!n8nParsed.success) {
+      return errorResponse("UPSTREAM_ERROR", "Respons n8n tidak valid.", 502);
     }
 
-    return errorResponse("UPSTREAM_ERROR", "Respons n8n tidak valid.", 502);
+    const reply = n8nParsed.data.reply;
+    await insertChatPesan(user.id, "bot", reply);
+    await pruneKeep200(user.id);
+
+    const r = NextResponse.json({ reply });
+    r.headers.set("Cache-Control", "no-store");
+    return r;
   } catch (e) {
     const isAbort =
-      e instanceof DOMException && e.name === "AbortError" ||
-      (e instanceof Error && e.name === "AbortError");
+      (e instanceof DOMException && e.name === "AbortError") || (e instanceof Error && e.name === "AbortError");
     if (isAbort) {
       return errorResponse(
         "UPSTREAM_TIMEOUT",
-        "Server terlalu lama merespons. Catatanmu mungkin sudah tersimpan, jadi cek Riwayat sebelum mengirim ulang.",
-        504
+        "Sabar, AI-nya baru bangun. Server di Railway lagi dinyalakan — coba tunggu sebentar lalu kirim lagi.",
+        504,
       );
     }
-    return errorResponse("UPSTREAM_ERROR", "Tidak bisa menghubungi server. Periksa koneksi, lalu coba lagi.", 502);
+    return errorResponse("UPSTREAM_ERROR", "Tidak bisa menghubungi server n8n. Periksa koneksi atau coba lagi dalam beberapa saat.", 502);
   } finally {
     clearTimeout(timeout);
   }
