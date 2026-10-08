@@ -32,11 +32,13 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
   const [hapusPending, setHapusPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // initialMessages hanya untuk mount pertama (server props).
+  // Jangan timpa messages lokal setelah kirim foto — objectURL bubble hilang jika di-replace.
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (initialMessages.length > 0) {
-      setMessages(initialMessages.map((m) => ({ role: m.role === "bot" ? "assistant" : "user", text: m.text }) as Msg));
-    }
-  }, [initialMessages]);
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+  }, []);
 
   useEffect(() => {
     if (listRef.current) {
