@@ -32,3 +32,7 @@ export function formatJamWIB(iso: string): string {
     hour12: false,
   }).format(d);
 }
+
+export function formatAngka(n: number): string {
+  return Math.round(n).toLocaleString("id-ID");
+}

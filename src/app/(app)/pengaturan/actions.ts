@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { pengaturanInputSchema } from "@/lib/schemas";
+import { pengaturanInputSchema, ukuranHurufSchema } from "@/lib/schemas";
 import { upsertPengaturan } from "@/lib/data/queries";
+import { updateUkuranHuruf } from "@/lib/data/pengguna";
 
 export type PengaturanState = {
   ok?: string;
@@ -42,10 +43,10 @@ export async function simpanPengaturan(
       if (!fieldErrors[key]) fieldErrors[key] = issue.message;
     }
     if (fieldErrors.calorieTarget?.includes("expected number")) {
-      fieldErrors.calorieTarget = "Target kalori harus angka 500–10000";
+      fieldErrors.calorieTarget = "Batas kalori harus angka 500–10000";
     }
     if (fieldErrors.budgetTarget?.includes("expected number")) {
-      fieldErrors.budgetTarget = "Budget harus angka 1–50.000.000";
+      fieldErrors.budgetTarget = "Uang belanja harus angka 1–50.000.000";
     }
     return { error: "Periksa kembali isian form.", fieldErrors };
   }
@@ -59,4 +60,29 @@ export async function simpanPengaturan(
   revalidatePath("/pengaturan");
   revalidatePath("/");
   return { ok: "Target tersimpan" };
+}
+
+export async function ubahUkuranHuruf(
+  _prev: PengaturanState,
+  formData: FormData
+): Promise<PengaturanState> {
+  let user;
+  try {
+    user = await requireUser();
+  } catch {
+    return { error: "Sesi tidak valid. Silakan masuk lagi." };
+  }
+  const raw = String(formData.get("ukuran") ?? "").trim();
+  const parsed = ukuranHurufSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: "Ukuran huruf tidak valid." };
+  }
+  try {
+    await updateUkuranHuruf(user.id, parsed.data);
+  } catch {
+    return { error: "Tidak bisa menyimpan ukuran huruf." };
+  }
+  revalidatePath("/pengaturan");
+  revalidatePath("/");
+  return { ok: "Ukuran huruf tersimpan." };
 }

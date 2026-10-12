@@ -168,7 +168,7 @@ export function AnggotaDetailClient({ anggota }: { anggota: Anggota }) {
       <ConfirmDialog
         open={confirmType === "resetPw"}
         title={`Reset password untuk ${anggota.nama}?`}
-        changes={[{ label: "Password", sebelum: "\u2022\u2022\u2022\u2022\u2022\u2022", sesudah: "password sementara baru" }]}
+        changes={[{ label: "Kata sandi", sebelum: "\u2022\u2022\u2022\u2022\u2022\u2022", sesudah: "kata sandi sementara baru" }]}
         akibat={`${anggota.nama} akan keluar dari semua perangkat dan wajib ganti password saat login berikutnya.`}
         confirmLabel="Ya, reset password"
         pending={isResettingPw || pendingConfirm}

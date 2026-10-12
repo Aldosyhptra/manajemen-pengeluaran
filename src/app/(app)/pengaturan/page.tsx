@@ -4,6 +4,8 @@ import { getTargets } from "@/lib/data/queries";
 import { PengaturanForm } from "@/components/PengaturanForm";
 import { PersonaCard } from "@/components/PersonaCard";
 import { getCurrentUser } from "@/lib/auth";
+import { getUkuranHuruf } from "@/lib/data/pengguna";
+import { UkuranHurufForm } from "@/components/UkuranHurufForm";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +14,12 @@ export default async function PengaturanPage() {
   if (!user) redirect("/login?next=/pengaturan");
   if (user.wajibGantiPassword) redirect("/ganti-password");
   const targets = await getTargets(user.chatId);
+  const ukuran = (await getUkuranHuruf(user.id)) as "normal" | "besar" | "sangat_besar";
 
   return (
     <main>
       <h1 className="font-heading text-2xl font-bold text-tinta">Atur</h1>
-      <p className="mt-2 text-sm text-tinta-redup">Atur target, panggilan, dan password.</p>
+      <p className="mt-2 text-sm text-tinta-redup">Atur batas kalori, uang belanja, panggilan, dan kata sandi.</p>
       {user.peran === "admin" && (
         <Link
           href="/pengaturan/pengguna"
@@ -26,6 +29,9 @@ export default async function PengaturanPage() {
         </Link>
       )}
       <PengaturanForm initialCalorie={targets.calorieTarget} initialBudget={targets.budgetTarget} panggilan={user.panggilan} />
+      <div className="mt-6">
+        <UkuranHurufForm initial={ukuran} />
+      </div>
       <div className="mt-6">
         <PersonaCard persona={user.persona} />
       </div>

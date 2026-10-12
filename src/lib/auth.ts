@@ -35,7 +35,7 @@ function getSecretKey(): Uint8Array {
 }
 
 export function hashPassword(password: string): string {
-  if (password.length < 10) throw new Error("Password minimal 10 karakter");
+  if (password.length < 10) throw new Error("Kata sandi minimal 10 karakter");
   const salt = randomBytes(SALT_BYTES);
   const derived = scryptSync(password, salt, KEYLEN, {
     N: SCRYPT_N,

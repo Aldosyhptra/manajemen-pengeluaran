@@ -13,6 +13,8 @@ export function ConfirmDialog({
   pending,
   onConfirm,
   onCancel,
+  confirmVariant,
+  warning,
 }: {
   open: boolean;
   title: string;
@@ -22,6 +24,8 @@ export function ConfirmDialog({
   pending?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmVariant?: "default" | "destructive";
+  warning?: string | null;
 }) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -59,11 +63,12 @@ export function ConfirmDialog({
           </ul>
         )}
         <p className="mt-3 text-sm text-tinta-redup">{akibat}</p>
+        {warning && <p className="mt-2 text-sm font-medium text-stempel">{warning}</p>}
         <div className="mt-5 flex justify-end gap-2">
           <Button ref={cancelRef} type="button" variant="outline" onClick={onCancel} disabled={pending} autoFocus>
             Batal
           </Button>
-          <Button type="button" onClick={onConfirm} disabled={pending}>
+          <Button type="button" variant={confirmVariant === "destructive" ? "destructive" : "default"} onClick={onConfirm} disabled={pending}>
             {pending ? "Menyimpan…" : confirmLabel}
           </Button>
         </div>

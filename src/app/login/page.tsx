@@ -26,7 +26,7 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     if (!username.trim() || !password) {
-      setError("Username dan password wajib diisi.");
+      setError("Username dan kata sandi wajib diisi.");
       return;
     }
     setPending(true);
@@ -38,7 +38,7 @@ function LoginForm() {
       });
       const data = (await res.json().catch(() => null)) as { error?: { message?: string }; wajibGantiPassword?: boolean } | null;
       if (!res.ok) {
-        const msg = data?.error?.message ?? "Username atau password salah.";
+        const msg = data?.error?.message ?? "Username atau kata sandi salah.";
         setError(msg);
         return;
       }
@@ -74,7 +74,7 @@ function LoginForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password" className="text-tinta">
-          Password
+          Kata sandi
         </Label>
         <div className="relative">
           <Input
@@ -91,7 +91,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
             aria-pressed={showPassword}
             className="absolute inset-y-0 right-2 flex items-center justify-center rounded-r-md text-tinta-redup hover:text-tinta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biru-nota focus-visible:ring-offset-2"
           >
@@ -108,7 +108,7 @@ function LoginForm() {
         {pending ? "Memeriksa…": "Masuk"}
       </Button>
       <p className="text-center text-sm text-tinta-redup">
-        Lupa password? Hubungi admin untuk mereset password.
+        Lupa kata sandi? Hubungi admin untuk mereset kata sandi.
       </p>
     </form>
   );

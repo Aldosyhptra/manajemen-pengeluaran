@@ -26,7 +26,7 @@ export function CategoryDonut({ data }: { data: CategoryRow[] }) {
     return (
       <section className="rounded border border-garis bg-struk p-4">
         <h2 className="font-heading text-lg font-bold text-tinta">
-          Pengeluaran per kategori
+          Pengeluaran per jenis
         </h2>
         <p className="mt-2 text-sm text-tinta-redup">Belum ada pengeluaran 7 hari terakhir.</p>
       </section>
@@ -38,7 +38,7 @@ export function CategoryDonut({ data }: { data: CategoryRow[] }) {
   return (
     <section className="rounded border border-garis bg-struk p-4">
       <h2 className="font-heading text-lg font-bold text-tinta">
-        Pengeluaran per kategori
+        Pengeluaran per jenis
       </h2>
 
       <div className="mt-4 h-48 w-full">

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const q = await pool.query("SELECT password_hash FROM pengguna WHERE id = $1", [user.id]);
   const stored = q.rows[0]?.password_hash as string | undefined;
   if (!stored || !verifyPassword(parsed.data.passwordLama, stored)) {
-    const r = NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Password lama salah." } }, { status: 400 });
+    const r = NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Kata sandi lama salah." } }, { status: 400 });
     r.headers.set("Cache-Control", "no-store"); return r;
   }
   let newHash: string;

@@ -19,7 +19,7 @@ export function GantiPasswordForm({ wajib }: { wajib: boolean }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setOk(null);
-    if (baru.length < 10) { setError("Password baru minimal 10 karakter."); return; }
+    if (baru.length < 10) { setError("Kata sandi baru minimal 10 karakter."); return; }
     setPending(true);
     try {
       const res = await fetch("/api/ganti-password", {
@@ -28,8 +28,8 @@ export function GantiPasswordForm({ wajib }: { wajib: boolean }) {
         body: JSON.stringify({ passwordLama: lama, passwordBaru: baru }),
       });
       const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-      if (!res.ok) { setError(data?.error?.message ?? "Gagal mengganti password."); return; }
-      setOk("Password berhasil diganti.");
+      if (!res.ok) { setError(data?.error?.message ?? "Gagal mengganti kata sandi."); return; }
+      setOk("Kata sandi berhasil diganti.");
       setLama(""); setBaru("");
       router.refresh();
       // kalau wajib, redirect ke beranda setelah sukses
@@ -42,14 +42,14 @@ export function GantiPasswordForm({ wajib }: { wajib: boolean }) {
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded border border-garis bg-struk p-4 sm:p-5">
       <div className="space-y-2">
-        <Label htmlFor="lama" className="text-tinta">Password lama</Label>
+        <Label htmlFor="lama" className="text-tinta">Kata sandi lama</Label>
         <div className="relative">
           <Input id="lama" type={showLama ? "text" : "password"} value={lama} onChange={(e) => setLama(e.target.value)} placeholder="••••••••" autoComplete="current-password" required className="pr-11" />
           <button type="button" onClick={() => setShowLama((v) => !v)} aria-label={showLama ? "Sembunyikan" : "Tampilkan"} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-tinta-redup hover:text-tinta">{showLama ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="baru" className="text-tinta">Password baru (min 10)</Label>
+        <Label htmlFor="baru" className="text-tinta">Kata sandi baru (min 10)</Label>
         <div className="relative">
           <Input id="baru" type={showBaru ? "text" : "password"} value={baru} onChange={(e) => setBaru(e.target.value)} placeholder="••••••••" autoComplete="new-password" required className="pr-11" />
           <button type="button" onClick={() => setShowBaru((v) => !v)} aria-label={showBaru ? "Sembunyikan" : "Tampilkan"} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-tinta-redup hover:text-tinta">{showBaru ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
@@ -57,7 +57,7 @@ export function GantiPasswordForm({ wajib }: { wajib: boolean }) {
       </div>
       {error && <p role="alert" className="rounded border border-stempel/30 bg-stempel/10 px-3 py-2 text-sm text-stempel">{error}</p>}
       {ok && <p role="status" className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{ok}</p>}
-      <Button type="submit" disabled={pending} className="w-full">{pending ? "Menyimpan…" : "Simpan password"}</Button>
+      <Button type="submit" disabled={pending} className="w-full">{pending ? "Menyimpan…" : "Simpan kata sandi"}</Button>
     </form>
   );
 }

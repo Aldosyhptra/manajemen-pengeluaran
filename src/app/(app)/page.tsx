@@ -1,5 +1,6 @@
-import { getDashboardData } from "@/lib/data/queries";
+import { getDashboardData, getJumlahCatatanHariIni } from "@/lib/data/queries";
 import { requireUser } from "@/lib/auth";
+import { buatRingkasan } from "@/lib/ringkasan";
 
 export const dynamic = "force-dynamic";
 import { DailyNote } from "@/components/DailyNote";
@@ -20,6 +21,15 @@ function formatDateLabel(dateWIB: string): string {
 export default async function BerandaPage() {
   const user = await requireUser();
   const data = await getDashboardData(user.chatId);
+  const jumlahCatatan = await getJumlahCatatanHariIni(user.chatId, data.date);
+  const ringkasan = buatRingkasan({
+    panggilan: user.panggilan,
+    jumlahCatatan,
+    spending: data.today.spending,
+    budget: data.targets.budgetTarget,
+    calories: data.today.calories,
+    calorieTarget: data.targets.calorieTarget,
+  });
 
   const isEmptyOverall =
     data.trend7d.every((d) => d.spending === 0 && d.calories === 0) &&
@@ -30,6 +40,7 @@ export default async function BerandaPage() {
     return (
       <main>
         <p className="text-sm text-tinta-redup">{formatDateLabel(data.date)}</p>
+        <p className="mt-3 max-w-[70ch] text-left text-sm leading-relaxed text-tinta">{ringkasan}</p>
         <div className="mt-4 rounded border border-dashed border-garis bg-struk p-6 text-sm text-tinta-redup">
           Belum ada catatan hari ini. Buka Catat dan tulis apa yang kamu beli atau makan.
         </div>
@@ -39,7 +50,9 @@ export default async function BerandaPage() {
 
   return (
     <main>
-      <div>
+      <p className="text-sm text-tinta-redup">{formatDateLabel(data.date)}</p>
+      <p className="mt-2 max-w-[70ch] text-left text-sm leading-relaxed text-tinta">{ringkasan}</p>
+      <div className="mt-4">
         <DailyNote
           spending={data.today.spending}
           budgetTarget={data.targets.budgetTarget}
@@ -52,7 +65,7 @@ export default async function BerandaPage() {
       <BerandaCharts trend7d={data.trend7d} category={data.spendingByCategory7d} />
 
       <section className="mt-6 rounded border border-garis bg-struk p-4">
-        <h2 className="font-heading text-lg font-bold text-tinta">Catatan terakhir</h2>
+        <h2 className="font-heading text-lg font-bold text-tinta">Yang baru dicatat</h2>
         {data.recent.length === 0 ? (
           <p className="mt-2 text-sm text-tinta-redup">Belum ada catatan.</p>
         ) : (

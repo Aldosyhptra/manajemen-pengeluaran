@@ -58,7 +58,7 @@ FROM (VALUES
 -- Akun dev. Password HANYA untuk lokal: admin / admin-dev-pass-1  dan  ibu / ibu-dev-pass-1
 INSERT INTO pengguna (username, nama, panggilan, chat_id, peran, password_hash, persona) VALUES
 ('admin', 'Admin Dev', 'Atmin', '1000000001', 'admin', 'scrypt$16384$8$1$uav+3nQyctDm4xn3Tw9z6w==$f9rsTXyVoH1PjlO/4WhmBdquwtwsq5TZiNml2fPl8OdX9ixoWGznlwZoS2xz1rVlo68Oz6Bm36FgcOFUPlKeTA==',
- $persona$Gaya bicara: gaul, santai, dan absurd ala sirkel "meme jomok" lokal.
+ $persona$Gunakan gaya bicara gaul, santai, dan absurd ala sirkel "meme jomok" lokal.
 Sisipan "lho ya", "loh ya", atau "woilah" HANYA saat bercanda, nge-troll, atau melebih-lebihkan situasi. DILARANG dipakai di kalimat yang menyebut angka, nominal uang, atau kalori. Pisahkan kalimat informasi angka (jelas dan akurat) dari kalimat candaan.
 Selipkan 1-2 emoji (😿 untuk jajan mahal atau over kalori, 😹 atau 🤤 untuk makan enak).
 Boleh hiperbola (dompet "nangis") dan lore meme ("Mas Amba", "Mas Rusdi", "Mas Gatot", "Si Imut") hanya sebagai bumbu komedi di akhir balasan.
@@ -98,3 +98,27 @@ FROM (VALUES
   ('user', 'kopi 18rb', 30),
   ('bot',  'Kopi sudah dicatat: Rp18.000. Total pengeluaran hari ini Rp58.000. 😹 Dompet masih aman.', 29)
 ) AS t(peran, teks, menit);
+
+
+-- ===== Untuk menguji "Sering dibeli" (tombol cepat) =====
+-- admin: es teh (4x, harga terakhir 5000), kopi susu dan bensin sudah ada di data di atas.
+INSERT INTO pengeluaran (chat_id, tanggal, kategori, deskripsi, nominal)
+SELECT '1000000001',
+       ((now() AT TIME ZONE 'Asia/Jakarta')::date - hari_lalu::int + jam::time) AT TIME ZONE 'Asia/Jakarta',
+       kategori, deskripsi, nominal::int
+FROM (VALUES
+  (2, '15:10', 'minuman', 'es teh', 5000),
+  (4, '15:20', 'minuman', 'es teh', 5000),
+  (6, '15:05', 'minuman', 'es teh', 6000)
+) AS t(hari_lalu, jam, kategori, deskripsi, nominal);
+
+-- ibu: sayur di pasar (3x, harga terakhir 45000) dan bakso (2x). Tidak boleh muncul di akun admin.
+INSERT INTO pengeluaran (chat_id, tanggal, kategori, deskripsi, nominal)
+SELECT 'web-ibu',
+       ((now() AT TIME ZONE 'Asia/Jakarta')::date - hari_lalu::int + jam::time) AT TIME ZONE 'Asia/Jakarta',
+       kategori, deskripsi, nominal::int
+FROM (VALUES
+  (3, '06:40', 'belanja', 'sayur di pasar', 40000),
+  (5, '06:35', 'belanja', 'sayur di pasar', 42000),
+  (4, '10:05', 'makanan', 'bakso',          20000)
+) AS t(hari_lalu, jam, kategori, deskripsi, nominal);

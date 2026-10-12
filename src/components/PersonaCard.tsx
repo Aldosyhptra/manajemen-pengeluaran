@@ -87,7 +87,7 @@ export function PersonaCard({ persona }: Props) {
 
   return (
     <div className="rounded border border-garis bg-struk p-4 sm:p-5">
-      <h2 className="font-heading text-base font-bold text-tinta">Persona</h2>
+      <h2 className="font-heading text-base font-bold text-tinta">Gaya bicara asisten</h2>
       <p className="mt-1 text-sm text-tinta-redup">
         Gaya bicara asisten. Bawaan: sopan dan ramah. Tulis permintaan singkat untuk mengubahnya.
       </p>

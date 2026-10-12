@@ -11,11 +11,11 @@ export default async function GantiPasswordPage() {
   return (
     <div className="flex h-full flex-1 items-center justify-center px-4 py-8">
       <main className="w-full max-w-sm -mt-8">
-        <h1 className="font-heading text-2xl font-bold text-tinta">Ganti password</h1>
+        <h1 className="font-heading text-2xl font-bold text-tinta">Ganti kata sandi</h1>
         <p className="mt-2 text-sm text-tinta-redup">
           {user.wajibGantiPassword
-            ? "Password sementara harus diganti sebelum lanjut."
-            : "Ganti password kamu. Minimal 10 karakter."}
+            ? "Kata sandi sementara harus diganti sebelum lanjut."
+            : "Ganti kata sandi kamu. Minimal 10 karakter."}
         </p>
         <GantiPasswordForm wajib={user.wajibGantiPassword} />
       </main>

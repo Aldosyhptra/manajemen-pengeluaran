@@ -110,3 +110,13 @@ export async function insertAktivitasPersona(penggunaId: number): Promise<void> 
 export async function cleanupLoginGagal() {
   await pool.query("DELETE FROM login_gagal WHERE waktu < now() - interval '1 day'");
 }
+// Fase 14: ukuran huruf
+export async function getUkuranHuruf(id: number): Promise<string> {
+  const r = await pool.query("SELECT ukuran_huruf FROM pengguna WHERE id = $1", [id]);
+  return (r.rows[0] as { ukuran_huruf?: string } | undefined)?.ukuran_huruf ?? "normal";
+}
+
+export async function updateUkuranHuruf(id: number, ukuran: string): Promise<number> {
+  const r = await pool.query("UPDATE pengguna SET ukuran_huruf = $2 WHERE id = $1", [id, ukuran]);
+  return r.rowCount ?? 0;
+}

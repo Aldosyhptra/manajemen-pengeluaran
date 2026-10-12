@@ -55,8 +55,8 @@ export function DailyNote({ spending, budgetTarget, calories, calorieTarget, dat
 
         <div className="mt-3">
           <p className="text-sm text-tinta-redup">Pengeluaran hari ini</p>
-          <div className="mt-1 flex items-baseline justify-between gap-3">
-            <p className="font-heading text-[40px] font-bold leading-none tabular-nums text-tinta">
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-heading text-[40px] font-bold leading-none tabular-nums text-tinta break-words [overflow-wrap:anywhere]">
               {formatRupiah(spending)}
             </p>
             <p className="shrink-0 text-sm tabular-nums text-tinta-redup">
@@ -84,8 +84,8 @@ export function DailyNote({ spending, budgetTarget, calories, calorieTarget, dat
 
         <div>
           <p className="text-sm text-tinta-redup">Kalori hari ini</p>
-          <div className="mt-1 flex items-baseline justify-between gap-3">
-            <p className="font-heading text-[40px] font-bold leading-none tabular-nums text-tinta">
+          <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-heading text-[40px] font-bold leading-none tabular-nums text-tinta break-words [overflow-wrap:anywhere]">
               {formatKkal(calories)}
             </p>
             <p className="shrink-0 text-sm tabular-nums text-tinta-redup">

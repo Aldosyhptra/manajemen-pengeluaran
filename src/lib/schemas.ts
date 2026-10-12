@@ -157,6 +157,32 @@ export const permintaanPersonaSchema = z
 
 export const pendaftaranPanggilanSchema = panggilanSchema;
 
+// Fase 13: ubah/hapus catatan (PRD 6.8)
+export const idCatatanSchema = z
+  .string()
+  .regex(/^\d{1,18}$/, "ID tidak valid");
+
+export const pengeluaranEditSchema = z.object({
+  id: idCatatanSchema,
+  kategori: kategoriSchema,
+  deskripsi: z.string().trim().min(1, "Deskripsi wajib diisi").max(100, "Deskripsi maksimal 100 karakter"),
+  nominal: z.coerce.number().int().min(1, "Nominal minimal Rp1").max(50_000_000, "Nominal maksimal Rp50.000.000"),
+});
+
+export const kaloriEditSchema = z.object({
+  id: idCatatanSchema,
+  nama_makanan: z.string().trim().min(1, "Nama makanan wajib diisi").max(100, "Nama maksimal 100 karakter"),
+  estimasi_kalori: z.coerce.number().int().min(0, "Kalori minimal 0").max(5000, "Kalori maksimal 5000"),
+});
+
+export function isPerubahanBesar(lama: number, baru: number): boolean {
+  if (lama <= 0 || baru <= 0) return false;
+  return baru >= lama * 10 || baru * 10 <= lama;
+}
+
+export const ukuranHurufSchema = z.enum(["normal", "besar", "sangat_besar"]);
+export type UkuranHuruf = z.infer<typeof ukuranHurufSchema>;
+
 export type Kategori = z.infer<typeof kategoriSchema>;
 export type DashboardData = z.infer<typeof dashboardDataSchema>;
 export type HistoryData = z.infer<typeof historyDataSchema>;

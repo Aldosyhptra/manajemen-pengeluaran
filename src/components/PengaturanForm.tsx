@@ -59,13 +59,13 @@ export function PengaturanForm({ initialCalorie, initialBudget, panggilan: initi
         <h2 className="font-heading text-base font-bold text-tinta">Target harian</h2>
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="calorieTarget" className="text-tinta">Target kalori harian</Label>
+            <Label htmlFor="calorieTarget" className="text-tinta">Batas kalori per hari</Label>
             <Input id="calorieTarget" name="calorieTarget" type="text" inputMode="numeric" value={calorieDisplay} onChange={(e) => setCalorieDisplay(formatThousand(e.target.value))} placeholder="2.000" aria-invalid={!!state.fieldErrors?.calorieTarget} aria-describedby={state.fieldErrors?.calorieTarget ? "err-calorie" : undefined} className="tabular-nums" required />
             <p className="text-xs text-tinta-redup">500 – 10.000 kkal</p>
             {state.fieldErrors?.calorieTarget && <p id="err-calorie" className="text-sm text-stempel">{state.fieldErrors.calorieTarget}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="budgetTarget" className="text-tinta">Budget harian</Label>
+            <Label htmlFor="budgetTarget" className="text-tinta">Uang belanja per hari</Label>
             <Input id="budgetTarget" name="budgetTarget" type="text" inputMode="numeric" value={budgetDisplay} onChange={(e) => setBudgetDisplay(formatThousand(e.target.value))} placeholder="150.000" aria-invalid={!!state.fieldErrors?.budgetTarget} aria-describedby={state.fieldErrors?.budgetTarget ? "err-budget" : undefined} className="tabular-nums" required />
             <p className="text-xs text-tinta-redup">1 – 50.000.000 (rupiah)</p>
             {state.fieldErrors?.budgetTarget && <p id="err-budget" className="text-sm text-stempel">{state.fieldErrors.budgetTarget}</p>}
@@ -89,11 +89,11 @@ export function PengaturanForm({ initialCalorie, initialBudget, panggilan: initi
         <Button type="submit" disabled={panggilanPending} className="mt-3 w-full sm:w-auto">{panggilanPending ? "Menyimpan…" : "Simpan panggilan"}</Button>
       </form>
 
-      {/* Ganti password & Keluar */}
+      {/* Ganti kata sandi & Keluar */}
       <div className="rounded border border-garis bg-struk p-4 sm:p-5">
         <h2 className="font-heading text-base font-bold text-tinta">Akun</h2>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link href="/ganti-password" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-biru-nota px-4 text-sm font-semibold text-white hover:opacity-90">Ganti password</Link>
+          <Link href="/ganti-password" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-biru-nota px-4 text-sm font-semibold text-white hover:opacity-90">Ganti kata sandi</Link>
           <Button type="button" variant="outline" onClick={onLogout} disabled={logoutPending} className="min-h-11">{logoutPending ? "Keluar…" : "Keluar"}</Button>
         </div>
       </div>

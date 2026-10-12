@@ -100,7 +100,7 @@ export function TambahPenggunaClient() {
           { label: "Chat ID", sebelum: "—", sesudah: username ? `web-${username}` : "—" },
           { label: "Peran", sebelum: "—", sesudah: "anggota" },
         ]}
-        akibat="Password sementara akan dibuat dan wajib diganti saat login pertama."
+        akibat="Kata sandi sementara akan dibuat dan wajib diganti saat login pertama."
         confirmLabel="Ya, tambah pengguna"
         pending={isPending || pendingConfirm}
         onConfirm={onConfirm}

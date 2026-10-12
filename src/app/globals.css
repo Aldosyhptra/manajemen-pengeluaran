@@ -168,3 +168,8 @@
     font-family: var(--font-bricolage), system-ui, sans-serif;
   }
 }
+
+/* Fase 14: ukuran huruf per akun (DESIGN 5.10) */
+html[data-ukuran="normal"] { font-size: 100%; }
+html[data-ukuran="besar"] { font-size: 125%; }
+html[data-ukuran="sangat_besar"] { font-size: 150%; }

@@ -143,3 +143,15 @@ export async function upsertPengaturan(chatId: string, calorieTarget: number, bu
     [chatId, calorieTarget, budgetTarget]
   );
 }
+export async function getJumlahCatatanHariIni(chatId: string, dateWIB: string): Promise<number> {
+  const r1 = await pool.query(
+    "SELECT count(*)::int AS n FROM pengeluaran WHERE chat_id = $1 AND (tanggal AT TIME ZONE 'Asia/Jakarta')::date = $2::date",
+    [chatId, dateWIB],
+  );
+  const r2 = await pool.query(
+    "SELECT count(*)::int AS n FROM kalori WHERE chat_id = $1 AND (tanggal AT TIME ZONE 'Asia/Jakarta')::date = $2::date",
+    [chatId, dateWIB],
+  );
+  return Number(r1.rows[0]?.n ?? 0) + Number(r2.rows[0]?.n ?? 0);
+}
+
