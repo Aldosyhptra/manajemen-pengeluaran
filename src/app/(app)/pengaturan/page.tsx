@@ -6,6 +6,7 @@ import { PersonaCard } from "@/components/PersonaCard";
 import { getCurrentUser } from "@/lib/auth";
 import { getUkuranHuruf } from "@/lib/data/pengguna";
 import { UkuranHurufForm } from "@/components/UkuranHurufForm";
+import { PasangCard } from "@/components/PasangCard";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,9 @@ export default async function PengaturanPage() {
       </div>
       <div className="mt-6">
         <PersonaCard persona={user.persona} />
+      </div>
+      <div className="mt-6">
+        <PasangCard />
       </div>
     </main>
   );

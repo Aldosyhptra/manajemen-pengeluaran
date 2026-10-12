@@ -5,6 +5,9 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { bentukTeksCepat } from "@/lib/sering";
+import type { SeringItem } from "@/lib/data/sering-dibeli";
+import { formatRupiah } from "@/lib/format";
 
 type Msg = { role: "user" | "assistant"; text: string; imageUrl?: string };
 type InitialMsg = { id: string; role: "user" | "bot"; text: string; at: string };
@@ -13,7 +16,7 @@ const examples = ["kopi 18rb", "sarapan nasi uduk 2 telur"];
 const MAX_FOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
-export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[] }) {
+export function ChatUI({ initialMessages = [], seringItems = [] }: { initialMessages?: InitialMsg[]; seringItems?: SeringItem[] }) {
   const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>(() =>
     initialMessages.map((m) => ({ role: m.role === "bot" ? "assistant" : "user", text: m.text })),
@@ -30,6 +33,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [showHapusConfirm, setShowHapusConfirm] = useState(false);
   const [hapusPending, setHapusPending] = useState(false);
+  const [seringHint, setSeringHint] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   // initialMessages hanya untuk mount pertama (server props).
@@ -159,6 +163,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
     setError(null);
     setPendingText(null);
     setPendingFoto(null);
+    setSeringHint(false);
     const previewToKeep = fotoPreview;
     // clear input + foto optimistically but keep preview for bubble
     setInput("");
@@ -181,6 +186,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
     const foto = pendingFoto;
     setPendingText(null);
     setPendingFoto(null);
+    setSeringHint(false);
     setError(null);
     await sendPayload(text, foto, { addUserBubble: false });
   }
@@ -207,6 +213,14 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
 
   function fillExample(ex: string) {
     setInput(ex);
+  }
+
+  function onSeringClick(item: SeringItem) {
+    const teks = bentukTeksCepat(item.nama, item.nominal_terakhir);
+    setInput(teks);
+    setSeringHint(true);
+    setError(null);
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   const hasFotoPicker = !!fotoFile && !!fotoPreview;
@@ -318,6 +332,29 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
         </div>
       )}
 
+      {seringItems.length > 0 && (
+        <section aria-labelledby="sering-judul" className="mt-4 rounded border border-garis bg-struk p-3">
+          <h2 id="sering-judul" className="text-sm font-semibold text-tinta">Sering dibeli</h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {seringItems.map((it) => {
+              const label = it.nama.length > 40 ? it.nama.slice(0, 40) : it.nama;
+              return (
+                <button
+                  key={it.nama}
+                  type="button"
+                  onClick={() => onSeringClick(it)}
+                  className="inline-flex max-w-full flex-col items-start rounded-full border border-garis bg-kertas px-3.5 py-1.5 text-left hover:bg-white active:scale-[0.98]"
+                >
+                  <span className="max-w-[18ch] truncate text-sm font-semibold capitalize leading-tight text-tinta">{label}</span>
+                  <span className="text-xs tabular-nums leading-none text-tinta-redup">{formatRupiah(it.nominal_terakhir)}</span>
+                </button>
+              );
+            })}
+          </div>
+          {seringHint && <p className="mt-2 text-xs text-tinta-redup">Tekan Kirim untuk mencatat.</p>}
+        </section>
+      )}
+
       <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
         <label htmlFor="chat-input" className="sr-only">
           Tulis catatan
@@ -326,7 +363,7 @@ export function ChatUI({ initialMessages = [] }: { initialMessages?: InitialMsg[
           ref={inputRef}
           id="chat-input"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => { setInput(e.target.value); setSeringHint(false); }}
           placeholder={hasFotoPicker ? "Caption foto (opsional) — mis. kopi 18rb" : "Tulis mis. \"kopi 18rb\" atau \"nasi uduk 2 telur\""}
           maxLength={500}
           className="min-h-11 flex-1 rounded-lg border border-garis bg-struk px-3 text-sm text-tinta placeholder:text-tinta-redup focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-biru-nota"
