@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import {
   dashboardTodaySchema,
+  terlarisRowSchema,
   dashboardTrendRowSchema,
   spendingByCategoryRowSchema,
   recentRowSchema,
@@ -48,6 +49,24 @@ export async function getTrend7d(chatId: string, dateWIB: string) {
   return r.rows.map((row) => dashboardTrendRowSchema.parse(row));
 }
 
+
+
+// Item paling sering dibeli 7 hari terakhir
+export async function getTerlaris7d(chatId: string, dateWIB: string) {
+  const r = await pool.query(
+    `SELECT lower(btrim(deskripsi)) AS nama,
+            count(*)::int AS jumlah,
+            sum(nominal)::int AS total
+     FROM pengeluaran
+     WHERE chat_id = $1
+       AND (tanggal AT TIME ZONE 'Asia/Jakarta')::date BETWEEN $2::date - 6 AND $2::date
+     GROUP BY lower(btrim(deskripsi))
+     ORDER BY jumlah DESC, total DESC
+     LIMIT 5`,
+    [chatId, dateWIB]
+  );
+  return r.rows.map((row) => terlarisRowSchema.parse(row));
+}
 export async function getSpendingByCategory7d(chatId: string, dateWIB: string) {
   const r = await pool.query(
     `SELECT kategori AS category, SUM(nominal)::int AS total FROM pengeluaran
@@ -83,12 +102,13 @@ export async function getTargets(chatId: string) {
 }
 
 export async function getDashboardData(chatId: string, dateWIB = todayWIB()) {
-  const [today, trend7d, spendingByCategory7d, recent, targets] = await Promise.all([
+  const [today, trend7d, spendingByCategory7d, recent, targets, terlaris7d] = await Promise.all([
     getTodayTotals(chatId, dateWIB),
     getTrend7d(chatId, dateWIB),
     getSpendingByCategory7d(chatId, dateWIB),
     getRecent(chatId),
     getTargets(chatId),
+    getTerlaris7d(chatId, dateWIB),
   ]);
   return {
     date: dateWIB,
@@ -97,6 +117,7 @@ export async function getDashboardData(chatId: string, dateWIB = todayWIB()) {
     trend7d,
     spendingByCategory7d,
     recent,
+    terlaris7d,
   };
 }
 

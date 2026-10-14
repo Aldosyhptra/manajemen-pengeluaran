@@ -41,6 +41,14 @@ export const spendingByCategoryRowSchema = z.object({
   total: z.number().int().min(0),
 });
 
+
+
+// Dashboard: item sering dibeli 7 hari
+export const terlarisRowSchema = z.object({
+  nama: z.string(),
+  jumlah: z.number().int().min(1),
+  total: z.number().int().min(0),
+});
 export const recentRowSchema = z.object({
   id: z.string(),
   at: z.string(), // ISO string dari Date.toISOString() di server
@@ -58,6 +66,7 @@ export const dashboardDataSchema = z.object({
   trend7d: z.array(dashboardTrendRowSchema).length(7),
   spendingByCategory7d: z.array(spendingByCategoryRowSchema),
   recent: z.array(recentRowSchema).max(5),
+  terlaris7d: z.array(terlarisRowSchema).max(5),
 });
 
 // Riwayat (PRD 6.2)

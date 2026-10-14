@@ -62,7 +62,7 @@ export default async function BerandaPage() {
         />
       </div>
 
-      <BerandaCharts trend7d={data.trend7d} category={data.spendingByCategory7d} />
+      <BerandaCharts trend7d={data.trend7d} category={data.spendingByCategory7d} terlaris7d={data.terlaris7d} />
 
       <section className="mt-6 rounded border border-garis bg-struk p-4">
         <h2 className="font-heading text-lg font-bold text-tinta">Yang baru dicatat</h2>
