@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { panggilanSchema } from "@/lib/schemas";
-import { updatePanggilanSendiri } from "@/lib/data/pengguna";
+import { updatePanggilanSendiri, countGantiPassword, insertGantiPassword } from "@/lib/data/pengguna";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +11,17 @@ export async function POST(req: Request) {
     const r = NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Sesi tidak valid. Silakan masuk lagi." } }, { status: 401 });
     r.headers.set("Cache-Control", "no-store"); return r;
   }
+
+  // Rate limit: max 5x per 30 menit
+  const attempts = await countGantiPassword(user.id, 30);
+  if (attempts >= 5) {
+    const r = NextResponse.json(
+      { error: { code: "RATE_LIMITED", message: "Terlalu sering mengubah panggilan. Coba lagi dalam 30 menit." } },
+      { status: 429 }
+    );
+    r.headers.set("Cache-Control", "no-store"); return r;
+  }
+
   let body: unknown;
   try { body = await req.json(); } catch {
     const r = NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Format tidak valid." } }, { status: 400 });
@@ -22,6 +33,7 @@ export async function POST(req: Request) {
     const r = NextResponse.json({ error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Panggilan tidak valid." } }, { status: 400 });
     r.headers.set("Cache-Control", "no-store"); return r;
   }
+  await insertGantiPassword(user.id);
   const n = await updatePanggilanSendiri(user.id, parsed.data);
   if (!n) {
     const r = NextResponse.json({ error: { code: "INTERNAL", message: "Gagal menyimpan panggilan." } }, { status: 500 });
