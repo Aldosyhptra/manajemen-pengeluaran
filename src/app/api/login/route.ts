@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
   // cek batas sebelum query user
   const [nUser, nIp] = await Promise.all([countLoginGagal(kunciUser, 15), countLoginGagal(kunciIp, 15)]);
-  if (nUser >= 5 || nIp >= 20) {
+  if (nUser >= 3 || nIp >= 10) {
     return jsonError("RATE_LIMITED", "Terlalu banyak percobaan. Coba lagi nanti.", 429);
   }
 

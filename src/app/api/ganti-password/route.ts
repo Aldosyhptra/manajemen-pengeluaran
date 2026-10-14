@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { getCurrentUser, hashPassword, verifyPassword, signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth";
 import { gantiPasswordSchema } from "@/lib/schemas";
-import { updatePasswordSendiri } from "@/lib/data/pengguna";
+import { updatePasswordSendiri, countGantiPassword, insertGantiPassword, clearGantiPassword } from "@/lib/data/pengguna";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,18 @@ export async function POST(req: Request) {
     r.headers.set("Cache-Control", "no-store");
     return r;
   }
+
+  // Rate limit: max 5x ganti password per 30 menit
+  const n = await countGantiPassword(user.id, 30);
+  if (n >= 5) {
+    const r = NextResponse.json(
+      { error: { code: "RATE_LIMITED", message: "Terlalu banyak percobaan. Coba lagi dalam 30 menit." } },
+      { status: 429 }
+    );
+    r.headers.set("Cache-Control", "no-store");
+    return r;
+  }
+
   let body: unknown;
   try { body = await req.json(); } catch {
     const r = NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Format tidak valid." } }, { status: 400 });
@@ -43,10 +55,12 @@ export async function POST(req: Request) {
   }
   const newV = await updatePasswordSendiri(user.id, newHash);
   if (!newV) {
+    await insertGantiPassword(user.id);
     const r = NextResponse.json({ error: { code: "INTERNAL", message: "Gagal mengganti password." } }, { status: 500 });
     r.headers.set("Cache-Control", "no-store"); return r;
   }
   const token = await signSession({ uid: user.id, v: newV });
+  await clearGantiPassword(user.id);
   const res = NextResponse.json({ ok: true });
   res.headers.set("Cache-Control", "no-store");
   const isProd = process.env.NODE_ENV === "production";

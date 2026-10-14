@@ -107,6 +107,24 @@ export async function insertAktivitasPersona(penggunaId: number): Promise<void> 
   await pool.query("INSERT INTO aktivitas (pengguna_id, jenis) VALUES ($1, 'persona')", [penggunaId]);
 }
 
+
+// Rate limit ganti password via login_gagal (tanpa migrasi baru)
+export async function countGantiPassword(penggunaId: number, minutes = 30): Promise<number> {
+  const r = await pool.query(
+    "SELECT count(*)::int AS n FROM login_gagal WHERE kunci = $1 AND waktu > now() - ($2 || ' minutes')::interval",
+    [`pw:${penggunaId}`, String(minutes)],
+  );
+  return Number(r.rows[0]?.n ?? 0);
+}
+
+export async function insertGantiPassword(penggunaId: number): Promise<void> {
+  await pool.query("INSERT INTO login_gagal (kunci) VALUES ($1)", [`pw:${penggunaId}`]);
+}
+
+export async function clearGantiPassword(penggunaId: number): Promise<void> {
+  await pool.query("DELETE FROM login_gagal WHERE kunci = $1", [`pw:${penggunaId}`]);
+}
+
 export async function cleanupLoginGagal() {
   await pool.query("DELETE FROM login_gagal WHERE waktu < now() - interval '1 day'");
 }
